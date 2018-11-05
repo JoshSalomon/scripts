@@ -1,0 +1,36 @@
+
+
+import jsbeautifier
+#from pygments import highlight, lexers, formatters
+
+===================================================================================
+
+#parameters = {'public': 'true', 'namespace': NAMESPACE}
+#r = requests.get(QUAY_API_URL, headers={'Accept-encoding': 'gzip'}, params=parameters,
+#                 timeout=12)
+
+#if r != None:
+    #print(r.text)
+#    print json.dumps(r.text, sort_keys=True, indent=4, separators=(',', ': '))
+#    t = json.dumps(r.text, indent=4)
+#    ct = highlight(unicode(formatted_json, 'UTF-8'), lexers.JsonLexer(), formatters.TerminalFormatter())
+#    print(t)
+#    res = jsbeautifier.beautify(r.text)
+#    print(res)
+#    exit(0)
+
+===================================================================================
+
+for repository in decoded_request['repositories']:
+    rep_name = repository['name']
+
+    url = "%s/%s/%s" % (QUAY_API_URL, 'biocontainers', rep_name)
+    r = requests.get(url, headers={'Accept-encoding': 'gzip'}, timeout=12)
+
+    json_decoder = json.JSONDecoder()
+    decoded_request = json_decoder.decode(r.text)
+    infos: object
+    for tag, infos in decoded_request['tags'].items():
+        print('quay.io/biocontainers/%s:%s\t%s' % (rep_name, tag, infos['size']))
+
+# docker run --rm -v /var/run/docker.sock:/var/run/docker.sock  -v /share/:/output  --privileged -t --rm  dk2sin

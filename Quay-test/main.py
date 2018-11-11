@@ -1,6 +1,8 @@
 # import json
 import sys
 import datetime
+import time
+import timer_class
 
 from quay_constants import TEST_USERNAME, TEST_PWD, TEST_TAG, DEBUG
 # import html
@@ -105,11 +107,11 @@ def run_main():
 
     docker_apis = DockerV2Apis()
     try:
-        session = docker_apis.login(TEST_USERNAME, TEST_PWD, requests, False)
+        session = docker_apis.login(TEST_USERNAME, TEST_PWD, requests)
 
         quay_apis = QuayApis(session)
 
-        supported = docker_apis.is_supported(False)
+        supported = docker_apis.is_supported()
         if supported:
             print("Docker V2 APIs present")
         else:
@@ -124,43 +126,12 @@ def run_main():
         #
         # get the first repository
         #
-        for i in range(2):
-            repo_name = repos[i]
+        i = 0
+        for repo_name in repos:
+            # repo_name = repos[i]
             print('repo %d: %s' % (i, repo_name))
-            # images = quay_apis.get_images_in_repo(repo_name)
-            # if len(images) > 0:
-            #     for j in range(len(images)):
-            #         if len(images[j]) > 60:
-            #             docker_apis.download_image(repo_name, images[j])
-            #             break
-            success, tags = docker_apis.get_tags_in_repo(repo_name)
-            digests = []
-            if success:
-                print(tags)
-                if len(tags) > 0:
-                    for tag in tags:
-                        if tag == TEST_TAG:
-                            digests = docker_apis.get_manifest_by_tag(repo_name, tag)
-                            for d in digests:
-                                print("Digest " + d)
-                    i = 1
-                    images = quay_apis.get_images_in_repo(repo_name)
-                    for image in images:
-                        print("Image " + image)
-                        #todo write an API for getting image info and see if teh digest appears in the
-                        #todo "command" field of the returned info
-                    if i <= 3 and DEBUG:
-                        now = datetime.datetime.now()
-                        for digest in digests:
-                            fname = f'image-{now.day}-{now.month}-{now.year}_{now.hour}{now.minute}{now.second}-{i}'
-                            print("image # %d:" % i)
-                            data = docker_apis.download_image(repo_name, digest)
-                            i += 1
-                            f = open('/home/jsalomon/PycharmProjects/Quay-test/Files/' + fname, 'wb+')
-                            f.write(data)
-                            f.flush()
-                            f.close()
-
+            i += 1
+            docker_apis.pull_all_images(repo_name)
 
     except Exception as e:
         print(" Exception: <%s>" % e.__str__())

@@ -3,6 +3,7 @@ import sys
 import datetime
 import time
 import timer_class
+import random_iter
 
 from quay_constants import TEST_USERNAME, TEST_PWD, TEST_TAG, DEBUG
 # import html
@@ -105,6 +106,10 @@ def run_main():
     # get_supported_apis(True)
     # get_image_manifest(True)
 
+    #######################################
+    #
+    # exit(0)
+    #######################################
     docker_apis = DockerV2Apis()
     try:
         session = docker_apis.login(TEST_USERNAME, TEST_PWD, requests)

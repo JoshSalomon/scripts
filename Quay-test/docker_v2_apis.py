@@ -7,6 +7,7 @@ from abstract_api import AbstractAPIs
 import gzip
 from io import BytesIO, SEEK_END
 import timer_class
+import random_iter
 
 
 # from quay_constants import QUAY_URL, QUAY_DOMAIN
@@ -143,15 +144,26 @@ class DockerV2Apis(AbstractAPIs):
         success, tags = self.get_tags_in_repo(repo_name)
         tc = timer_class.TimerAPI()
         tc.start()
+
         if success:
-            for tag in tags:
+            tag_iter = random_iter.RandomIter()
+            digest_iter = random_iter.RandomIter()
+            tag_iter.init(len(tags))
+            next_tag_idx = tag_iter.next()
+            #for tag in tags:
+            while next_tag_idx is not None:
+                tag = tags[next_tag_idx]
                 digests = self.get_manifest_by_tag(repo_name, tag)
                 for d in digests:
                     if const.Debug.print_debug_info:
                         print(f'Digest: {d}')
                 i = 1
                 # now = datetime.datetime.now()
-                for digest in digests:
+                digest_iter.init(len(digests))
+                next_digest_idx = digest_iter.next()
+                #for digest in digests:
+                while next_digest_idx is not None:
+                    digest = digests[next_digest_idx]
                     # fname = f'image-{now.day}-{now.month}-{now.year}_{now.hour}{now.minute}{now.second}-{i}'
                     if const.Debug.print_debug_info:
                         print("image # %d:" % i)
@@ -165,5 +177,7 @@ class DockerV2Apis(AbstractAPIs):
                     # f.write(data)
                     # f.flush()
                     # f.close()
+                    next_digest_idx = digest_iter.next()
+                next_tag_idx = tag_iter.next()
         const.DEBUG.pop_debug_level()
         tc.print_stats()

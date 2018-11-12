@@ -1,4 +1,9 @@
-
+#
+# Random iterator over a list.
+# The method - create a list in the size of the original size (by calling init(size) method). Every iteration
+# (call the next() method), a random number is selected and the item from the list is removed. The index is returned
+# and the list becomes shorter by one.
+#
 import random
 
 

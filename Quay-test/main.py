@@ -1,15 +1,8 @@
-# import json
+
 import sys
-import datetime
-import time
-import timer_class
-import random_iter
 
 from quay_constants import TEST_USERNAME, TEST_PWD, TEST_TAG, DEBUG
-# import html
-# from protocol_v2 import V2Protocol
 
-# from docker_v2_apis import login, print_content, get_repositories
 from docker_v2_apis import DockerV2Apis
 from quay_apis import QuayApis
 
@@ -22,12 +15,6 @@ except ImportError as ie:
     print("Error importing requests <%s, %s>" % (ie.name, ie.path))
     requests = None
     sys.exit(0)
-
-
-#
-# composite constants
-#
-
 
 # def get_image_ancestors(img_id):
 #     url = const.QUAY_API_URL + '/' + const.NAMESPACE + '/' + const.REPOSITORY + '/image/' + img_id
@@ -106,10 +93,6 @@ def run_main():
     # get_supported_apis(True)
     # get_image_manifest(True)
 
-    #######################################
-    #
-    # exit(0)
-    #######################################
     docker_apis = DockerV2Apis()
     try:
         session = docker_apis.login(TEST_USERNAME, TEST_PWD, requests)

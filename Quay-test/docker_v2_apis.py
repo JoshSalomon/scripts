@@ -8,10 +8,11 @@ import gzip
 from io import BytesIO, SEEK_END
 import timer_class
 import random_iter
-
+import logging
 
 # from quay_constants import QUAY_URL, QUAY_DOMAIN
 
+LARGE_DIGESTS = ['25', '43', '6F', '90', 'cd', 'd1']
 
 class DockerV2Apis(AbstractAPIs):
     def __init__(self):
@@ -30,20 +31,20 @@ class DockerV2Apis(AbstractAPIs):
 
         auth = (username, pwd)
         self.session = requests.session()
-        print(self.session)
+        logging.debug(self.session)
         url = const.DOCKER_API_URL + const.D_API_AUTH
         r = self.get(url, params=params, auth=auth, timeout=30)
 
         decoded_request = self.json_decoder.decode(r.text)
         token = decoded_request['token']
         if const.DEBUG.print_response:
-            print('== 3 headers ==')
-            print(r.headers)
-            print('== 4 content in lines ==')
+            logging.debug('== 3 headers ==')
+            logging.debug(r.headers)
+            logging.debugprint('== 4 content in lines ==')
             self.print_content(r.content.splitlines())
 
         if const.DEBUG.print_decoded_response:
-            print("== token: %s" % token)
+            logging.debug("== token: %s" % token)
 
         if r.status_code / 100 != 2:
             return None
@@ -57,12 +58,12 @@ class DockerV2Apis(AbstractAPIs):
     def print_content(content):
         i = 0
         for line in content:
-            print("%d: %s" % (i, line))
+            logging.debug("%d: %s" % (i, line))
             i += 1
 
     def get_repositories(self):
         url = const.DOCKER_API_URL + const.D_API_CATALOG
-        r = self.get(url, timeout=12)
+        r = self.get(url, timeout=30)
         if r.status_code >= 400:
             return
         decoded_request = self.json_decoder.decode(r.text)
@@ -79,38 +80,38 @@ class DockerV2Apis(AbstractAPIs):
     def is_supported(self):
         url = const.DOCKER_API_URL
         #    print('request: (token: %s)' % token)
-        r = self.get(url, timeout=12)
+        r = self.get(url, timeout=30)
         success_status_code: bool = r.status_code / 100 == 2
         if const.DEBUG.print_processed_response or not success_status_code:
-            print('== 3 headers ==')
-            print(r.headers)
-            print('== 4 content in lines ==')
+            logging.debug('== 3 headers ==')
+            logging.debug(r.headers)
+            logging.debug('== 4 content in lines ==')
             self.print_content(r.content.splitlines())
         return success_status_code
 
     def download_image(self, repo_name, image_id, b_decompress=False):
         url = const.DOCKER_API_URL + repo_name + '/blobs/' + image_id
-        r = self.get(url, timeout=12)
+        r = self.get(url, timeout=30)
         data = None
         size = 0
         if r.headers['Content-Encoding'] == 'gzip':
             bio = BytesIO(r.content)
             size = bio.seek(0, SEEK_END)
-            print(f'compressed size = {size}')
+            logging.debug(f'compressed size = {size}')
             if b_decompress:
                 bio.seek(0)
                 data = gzip.decompress(bio.read())
                 if const.Debug.print_processed_response:
-                    print(" decoding gzip response")
-                    print("Decompressed size = %d" % len(data))
-                    print(data[:64])
+                    logging.debug(" decoding gzip response")
+                    logging.debug("Decompressed size = %d" % len(data))
+                    logging.debug(data[:64])
             # data1 = str(data, 'utf-8')
             # print(data1[:64])
         return data, size
 
     def get_tags_in_repo(self, repo_name):
         url = const.DOCKER_API_URL + repo_name + '/tags/list'
-        r = self.get(url, timeout=12)
+        r = self.get(url, timeout=30)
         success = r.status_code / 100 == 2
         tags = []
         if success:
@@ -119,23 +120,23 @@ class DockerV2Apis(AbstractAPIs):
                 for tag in decoded_request['tags']:
                     tags.append(tag)
             if const.DEBUG.print_processed_response:
-                print(f'Tags for repo {repo_name}:')
-                print(f'  {tags}')
+                logging.debug(f'Tags for repo {repo_name}:')
+                logging.debug(f'  {tags}')
         return success, tags
 
     def get_manifest_by_tag(self, repo_name, tag):
         url = const.DOCKER_API_URL + repo_name + '/manifests/' + tag
-        r = self.get(url, timeout=12)
+        r = self.get(url, timeout=30)
         decoded_request = self.json_decoder.decode(r.text)
         digests = []
         for line in decoded_request['fsLayers']:
             digests.append(line['blobSum'])
             if const.DEBUG.print_debug_info:
-                print('appending ' + line['blobSum'])
+                logging.debug('appending ' + line['blobSum'])
 
         if const.DEBUG.print_processed_response:
-            print(f'Digests for repo/tag {repo_name}/{tag}:')
-            print(f'  {digests}')
+            logging.debug(f'Digests for repo/tag {repo_name}/{tag}:')
+            logging.debug(f'  {digests}')
 
         return digests
 
@@ -156,7 +157,7 @@ class DockerV2Apis(AbstractAPIs):
                 digests = self.get_manifest_by_tag(repo_name, tag)
                 for d in digests:
                     if const.Debug.print_debug_info:
-                        print(f'Digest: {d}')
+                        logging.debug(f'Digest: {d}')
                 i = 1
                 # now = datetime.datetime.now()
                 digest_iter.init(len(digests))
@@ -166,18 +167,22 @@ class DockerV2Apis(AbstractAPIs):
                     digest = digests[next_digest_idx]
                     # fname = f'image-{now.day}-{now.month}-{now.year}_{now.hour}{now.minute}{now.second}-{i}'
                     if const.Debug.print_debug_info:
-                        print("image # %d:" % i)
-                    start_download = timer_class.TimerAPI()
-                    start_download.start()
-                    _, size = self.download_image(repo_name, digest)
-                    dl_time_millis = start_download.diff_in_millis()
-                    tc.add_stat(dl_time_millis, size)
-                    i += 1
-                    # f = open('/home/jsalomon/PycharmProjects/Quay-test/Files/' + fname, 'wb+')
-                    # f.write(data)
-                    # f.flush()
-                    # f.close()
+                        logging.debug("image # %d: head=%s digest=%s" % (i, digest[7:9], digest))
+                    #todo:
+                    # find a better way to filter the large messages (through headers or manifests)
+                    if digest[7:9] in LARGE_DIGESTS:
+                        start_download = timer_class.TimerAPI()
+                        start_download.start()
+                        _, size = self.download_image(repo_name, digest)
+                        dl_time_millis = start_download.diff_in_millis()
+                        tc.add_stat(dl_time_millis, size)
+                        i += 1
+                        # f = open('/home/jsalomon/PycharmProjects/Quay-test/Files/' + fname, 'wb+')
+                        # f.write(data)
+                        # f.flush()
+                        # f.close()
                     next_digest_idx = digest_iter.next()
                 next_tag_idx = tag_iter.next()
         const.DEBUG.pop_debug_level()
         tc.print_stats()
+        return tc.bandwidth()

@@ -5,6 +5,8 @@
 # and the list becomes shorter by one.
 #
 import random
+import quay_constants
+import logging
 
 
 class RandomIter(object):
@@ -18,9 +20,12 @@ class RandomIter(object):
     def next(self):
         if len(self.iter_list) <= 0:
             return None
-        print("iter next, len=%d, iter_list=%s" % (len(self.iter_list), self.iter_list), end="")
+        if quay_constants.DEBUG.print_debug_info:
+            msg_head = "iter next, len=%d, iter_list=%s" % (len(self.iter_list), self.iter_list)
         index = random.randint(0, len(self.iter_list) - 1)
-        print(" index=%d, value=%d" % (index, self.iter_list[index]), end="")
+        if quay_constants.DEBUG.print_debug_info:
+            msg_head += " index=%d, value=%d" % (index, self.iter_list[index])
         rc = self.iter_list.pop(index)
-        print(" after pop list=%s" % self.iter_list)
+        if quay_constants.DEBUG.print_debug_info:
+            logging.debug("%s after pop list=%s" % (msg_head, self.iter_list))
         return rc

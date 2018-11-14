@@ -17,11 +17,11 @@ except ImportError as ie:
 class Worker(threading.Thread):
     def __init__(self, name):
         threading.Thread.__init__(self)
-        #self.threadID = threadID
         self.name = name
         self.bandwidth = 0
-        #self.counter = counter
+        self.total_capacity = 0
 
+    #todo add num-iterations here
     def run(self):
         logging.debug('Start worker')
         docker_apis = DockerV2Apis()
@@ -50,7 +50,7 @@ class Worker(threading.Thread):
                 # repo_name = repos[i]
                 logging.info('repo %d: %s' % (i, repo_name))
                 i += 1
-                self.bandwidth = docker_apis.pull_all_images(repo_name)
+                self.bandwidth, self.total_capacity = docker_apis.pull_all_images(repo_name)
 
         except Exception as e:
             logging.error(" Exception: <%s>" % e.__str__())
@@ -65,4 +65,4 @@ class Worker(threading.Thread):
         return
 
     def get_bandwidth(self):
-        return self.bandwidth
+        return self.bandwidth, self.total_capacity

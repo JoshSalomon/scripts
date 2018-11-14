@@ -1,16 +1,11 @@
 
 import sys
-
-from quay_constants import TEST_USERNAME, TEST_PWD, TEST_TAG, DEBUG
-
-from docker_v2_apis import DockerV2Apis
-from quay_apis import QuayApis
-
 import logging
-import threading
 
+import timer_class
 import worker
 
+NUM_THREADS = 2
 # import quay_constants as const
 
 try:
@@ -60,7 +55,7 @@ except ImportError as ie:
 #     if to_print_response:
 #         print('== 3 headers ==')
 #         print(r.headers)
-#         print('== 4 text ==')
+#          print('== 4 text ==')
 #         print(r.text)
 #         # print('== 5 content ==')
 #         # print(r.content)
@@ -94,88 +89,39 @@ def wait_for_all_threads(threads):
     return
 
 
-def run_main():
+def run_main(num_threads: int = NUM_THREADS):
     logging.basicConfig(level=logging.INFO, format='[%(levelname)-8s] (%(threadName)-10s) %(message)s',)
     threads = []
+    tc = None
     try:
-        for i in range(8):
-            t = worker.Worker(f'Thread-{i}')
+        for i in range(num_threads):
+            t = worker.Worker('Thread-%d' % i)
             threads.append(t)
         start_all_threads(threads)
-    except e:
-        logging.error("Unable to start threads")
+        tc = timer_class.TimerAPI()
+        tc.start()
+    except Exception as e:
+        logging.error("Unable to start threads, %s" % e.args)
+#        raise e
 
     logging.info("Waiting for thread to complete")
     wait_for_all_threads(threads)
     total_bw = 0
+    total_cap = 0
     for t in threads:
-        total_bw += t.bandwidth
+        bw, cap = t.get_bandwidth()
+        total_bw += bw
+        total_cap += cap
     #todo:
     #  do a proper upper and lower bounds of the stats (by taking the time of the fastest and slowest threads.
     #  - make sure the number is not an over estimation.
-    logging.info(f"Done, total bandwidth = {int(total_bw)} KB/S")
+    time_in_millis = tc.diff_in_millis()
+    lower_bound_bw = (total_cap / 1024) / (time_in_millis / 1000)
+    logging.info("Done, total bandwidth = %d KB/s" % total_bw)
+    logging.info("Total time: %d ms, lower bound bandwidth = %d KB/s" % (time_in_millis, int(lower_bound_bw)))
     exit(0)
-
-
-# def worker():
-#     # json_decoder = json.JSONDecoder()
-#
-#     # image_id = const.IMAGE_ID_TOP
-#     # ancestors_list = get_image_ancestors(image_id).split('/')
-#     # print_ancestors_list(ancestors_list, image_id)
-#
-#     # for anc in ancestors_list:
-#     #     if anc != '':
-#     #         new_list = get_image_ancestors(anc).split('/')
-#     #         print_ancestors_list(new_list, anc)
-#
-#     # get_supported_apis(True)
-#     # get_image_manifest(True)
-#
-#
-#
-#     logging.debug('Start worker')
-#     docker_apis = DockerV2Apis()
-#     try:
-#         session = docker_apis.login(TEST_USERNAME, TEST_PWD, requests)
-#
-#         quay_apis = QuayApis(session)
-#
-#         supported = docker_apis.is_supported()
-#         if supported:
-#             print("Docker V2 APIs present")
-#         else:
-#             print("Failed to connect to Docker V2 API - exiting")
-#             exit(1)
-#         repos = docker_apis.get_repositories()
-#         if repos is None:
-#             print("No available repositories")
-#             exit(0)
-#         else:
-#             print("Some repositories are available")
-#         #
-#         # get the first repository
-#         #
-#         i = 0
-#         for repo_name in repos:
-#             # repo_name = repos[i]
-#             print('repo %d: %s' % (i, repo_name))
-#             i += 1
-#             docker_apis.pull_all_images(repo_name)
-#
-#     except Exception as e:
-#         print(" Exception: <%s>" % e.__str__())
-#         print(" == Cause: <%s>" % e.__cause__)
-#         print(" == Context <%s>" % e.__context__)
-#         for arg in e.args:
-#             print(" == args <%s>" % arg)
-#         logging.debug('Exit worker after exception, exit code 1')
-#         exit(1)
-#
-#     logging.debug('return from worker')
-#     return
 
 
 if __name__ == "__main__":
     # execute only if run as a script
-    run_main()
+    run_main(NUM_THREADS)

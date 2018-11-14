@@ -14,8 +14,21 @@ class AbstractAPIs(object):
     def get(self, url, **kwargs):
         self.set_token()
         if const.DEBUG.print_request:
-            logging.debug(url)
+            logging.debug('GET: %s' % url)
         r = self.session.get(url, **kwargs)
+        if const.DEBUG.print_status_code:
+            logging.debug("Status code = %d" % r.status_code)
+        if const.DEBUG.print_response:
+            logging.debug(r)
+        if const.DEBUG.print_headers:
+            logging.debug(r.headers)
+        return r
+
+    def head(self, url, **kwargs):
+        self.set_token()
+        if const.DEBUG.print_request:
+            logging.debug('HEAD: %s' % url)
+        r = self.session.head(url, **kwargs)
         if const.DEBUG.print_status_code:
             logging.debug("Status code = %d" % r.status_code)
         if const.DEBUG.print_response:

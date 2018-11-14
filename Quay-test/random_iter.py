@@ -12,6 +12,7 @@ import logging
 class RandomIter(object):
     def __init__(self):
         self.iter_list = []
+        #todo set the random seed here based on the thread_num
         pass
 
     def init(self, size):

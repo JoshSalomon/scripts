@@ -1,6 +1,6 @@
 # import json
 import os
-import datetime
+#import datetime
 # from requests import Session
 import quay_constants as const
 from abstract_api import AbstractAPIs
@@ -10,9 +10,6 @@ import timer_class
 import random_iter
 import logging
 
-# from quay_constants import QUAY_URL, QUAY_DOMAIN
-
-LARGE_DIGESTS = ['25', '43', '6F', '90', 'cd', 'd1']
 
 class DockerV2Apis(AbstractAPIs):
     def __init__(self):
@@ -81,13 +78,26 @@ class DockerV2Apis(AbstractAPIs):
         url = const.DOCKER_API_URL
         #    print('request: (token: %s)' % token)
         r = self.get(url, timeout=30)
-        success_status_code: bool = r.status_code / 100 == 2
+        success_status_code = r.status_code / 100 == 2
         if const.DEBUG.print_processed_response or not success_status_code:
             logging.debug('== 3 headers ==')
             logging.debug(r.headers)
             logging.debug('== 4 content in lines ==')
             self.print_content(r.content.splitlines())
         return success_status_code
+
+    def get_image_size(self, repo_name, image_id, b_decompress=False):
+        size = 0
+        try:
+            url = const.DOCKER_API_URL + repo_name + '/blobs/' + image_id
+            r = self.head(url, timeout=30)
+            logging.debug(r.headers)
+            if r.status_code / 100 == 2:
+                size = int(r.headers['Content-Length'])
+        except Exception as e:
+            logging.error('Error issuing HEAD request ' + url)
+            logging.error(' ==> %s' % e.args)
+        return size
 
     def download_image(self, repo_name, image_id, b_decompress=False):
         url = const.DOCKER_API_URL + repo_name + '/blobs/' + image_id
@@ -97,7 +107,7 @@ class DockerV2Apis(AbstractAPIs):
         if r.headers['Content-Encoding'] == 'gzip':
             bio = BytesIO(r.content)
             size = bio.seek(0, SEEK_END)
-            logging.debug(f'compressed size = {size}')
+            logging.debug('compressed size = %d' % int(size))
             if b_decompress:
                 bio.seek(0)
                 data = gzip.decompress(bio.read())
@@ -120,8 +130,8 @@ class DockerV2Apis(AbstractAPIs):
                 for tag in decoded_request['tags']:
                     tags.append(tag)
             if const.DEBUG.print_processed_response:
-                logging.debug(f'Tags for repo {repo_name}:')
-                logging.debug(f'  {tags}')
+                logging.debug('Tags for repo %s:' % repo_name)
+                logging.debug('  %s' % tags)
         return success, tags
 
     def get_manifest_by_tag(self, repo_name, tag):
@@ -135,12 +145,12 @@ class DockerV2Apis(AbstractAPIs):
                 logging.debug('appending ' + line['blobSum'])
 
         if const.DEBUG.print_processed_response:
-            logging.debug(f'Digests for repo/tag {repo_name}/{tag}:')
-            logging.debug(f'  {digests}')
+            logging.debug('Digests for repo/tag %s/%s:' % (repo_name, tag))
+            logging.debug('  %s' % digests)
 
         return digests
 
-    def pull_all_images(self, repo_name):
+    def pull_all_images(self, repo_name, min_download_size = 50 * 1024):
         const.DEBUG.push_add_debug_info()
         success, tags = self.get_tags_in_repo(repo_name)
         tc = timer_class.TimerAPI()
@@ -151,13 +161,12 @@ class DockerV2Apis(AbstractAPIs):
             digest_iter = random_iter.RandomIter()
             tag_iter.init(len(tags))
             next_tag_idx = tag_iter.next()
-            #for tag in tags:
             while next_tag_idx is not None:
                 tag = tags[next_tag_idx]
                 digests = self.get_manifest_by_tag(repo_name, tag)
                 for d in digests:
                     if const.Debug.print_debug_info:
-                        logging.debug(f'Digest: {d}')
+                        logging.debug('Digest: %s' % d)
                 i = 1
                 # now = datetime.datetime.now()
                 digest_iter.init(len(digests))
@@ -165,22 +174,16 @@ class DockerV2Apis(AbstractAPIs):
                 #for digest in digests:
                 while next_digest_idx is not None:
                     digest = digests[next_digest_idx]
-                    # fname = f'image-{now.day}-{now.month}-{now.year}_{now.hour}{now.minute}{now.second}-{i}'
-                    if const.Debug.print_debug_info:
-                        logging.debug("image # %d: head=%s digest=%s" % (i, digest[7:9], digest))
-                    #todo:
-                    # find a better way to filter the large messages (through headers or manifests)
-                    if digest[7:9] in LARGE_DIGESTS:
+                    size = self.get_image_size(repo_name, digest)
+                    logging.debug(' image size=%d' % int(size))
+                    if size > min_download_size:
                         start_download = timer_class.TimerAPI()
                         start_download.start()
+                        logging.info(" Going to download image, size=%d" % size)
                         _, size = self.download_image(repo_name, digest)
                         dl_time_millis = start_download.diff_in_millis()
                         tc.add_stat(dl_time_millis, size)
                         i += 1
-                        # f = open('/home/jsalomon/PycharmProjects/Quay-test/Files/' + fname, 'wb+')
-                        # f.write(data)
-                        # f.flush()
-                        # f.close()
                     next_digest_idx = digest_iter.next()
                 next_tag_idx = tag_iter.next()
         const.DEBUG.pop_debug_level()

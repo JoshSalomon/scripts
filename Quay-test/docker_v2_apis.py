@@ -9,6 +9,9 @@ from io import BytesIO, SEEK_END
 import timer_class
 import random_iter
 import logging
+import config
+
+c = config.Config()
 
 
 class DockerV2Apis(AbstractAPIs):
@@ -17,19 +20,20 @@ class DockerV2Apis(AbstractAPIs):
 
     def login(self, username, pwd, requests):
         params = {
-            'account': username,
+            'account': c.username,
             'service': const.QUAY_DOMAIN,
             'scope': [],
         }
-        if username is None:
-            username = os.environ["QUAY_USERNAME"]
-        if pwd is None:
-            pwd = os.environ["QUAY_PWD"]
+        #todo take username/password from c.
+        #if username is None:
+        #    username = os.environ["QUAY_USERNAME"]
+        #if pwd is None:
+        #    pwd = os.environ["QUAY_PWD"]
 
-        auth = (username, pwd)
+        auth = (c.username, c.password)
         self.session = requests.session()
         logging.debug(self.session)
-        url = const.DOCKER_API_URL + const.D_API_AUTH
+        url = c.docker_api_url() + const.D_API_AUTH
         r = self.get(url, params=params, auth=auth, timeout=30)
 
         decoded_request = self.json_decoder.decode(r.text)
@@ -59,7 +63,7 @@ class DockerV2Apis(AbstractAPIs):
             i += 1
 
     def get_repositories(self):
-        url = const.DOCKER_API_URL + const.D_API_CATALOG
+        url = c.docker_api_url() + const.D_API_CATALOG
         r = self.get(url, timeout=30)
         if r.status_code >= 400:
             return
@@ -75,7 +79,7 @@ class DockerV2Apis(AbstractAPIs):
             return decoded_request['repositories']
 
     def is_supported(self):
-        url = const.DOCKER_API_URL
+        url = c.docker_api_url()
         #    print('request: (token: %s)' % token)
         r = self.get(url, timeout=30)
         success_status_code = r.status_code / 100 == 2
@@ -89,7 +93,7 @@ class DockerV2Apis(AbstractAPIs):
     def get_image_size(self, repo_name, image_id, b_decompress=False):
         size = 0
         try:
-            url = const.DOCKER_API_URL + repo_name + '/blobs/' + image_id
+            url = c.docker_api_url() + repo_name + '/blobs/' + image_id
             r = self.head(url, timeout=30)
             logging.debug(r.headers)
             if r.status_code / 100 == 2:
@@ -100,7 +104,7 @@ class DockerV2Apis(AbstractAPIs):
         return size
 
     def download_image(self, repo_name, image_id, b_decompress=False):
-        url = const.DOCKER_API_URL + repo_name + '/blobs/' + image_id
+        url = c.docker_api_url() + repo_name + '/blobs/' + image_id
         r = self.get(url, timeout=30)
         data = None
         size = 0
@@ -120,7 +124,7 @@ class DockerV2Apis(AbstractAPIs):
         return data, size
 
     def get_tags_in_repo(self, repo_name):
-        url = const.DOCKER_API_URL + repo_name + '/tags/list'
+        url = c.docker_api_url() + repo_name + '/tags/list'
         r = self.get(url, timeout=30)
         success = r.status_code / 100 == 2
         tags = []
@@ -135,7 +139,7 @@ class DockerV2Apis(AbstractAPIs):
         return success, tags
 
     def get_manifest_by_tag(self, repo_name, tag):
-        url = const.DOCKER_API_URL + repo_name + '/manifests/' + tag
+        url = c.docker_api_url() + repo_name + '/manifests/' + tag
         r = self.get(url, timeout=30)
         decoded_request = self.json_decoder.decode(r.text)
         digests = []
@@ -157,35 +161,37 @@ class DockerV2Apis(AbstractAPIs):
         tc.start()
 
         if success:
-            tag_iter = random_iter.RandomIter()
-            digest_iter = random_iter.RandomIter()
-            tag_iter.init(len(tags))
-            next_tag_idx = tag_iter.next()
-            while next_tag_idx is not None:
-                tag = tags[next_tag_idx]
-                digests = self.get_manifest_by_tag(repo_name, tag)
-                for d in digests:
-                    if const.Debug.print_debug_info:
-                        logging.debug('Digest: %s' % d)
-                i = 1
-                # now = datetime.datetime.now()
-                digest_iter.init(len(digests))
-                next_digest_idx = digest_iter.next()
-                #for digest in digests:
-                while next_digest_idx is not None:
-                    digest = digests[next_digest_idx]
-                    size = self.get_image_size(repo_name, digest)
-                    logging.debug(' image size=%d' % int(size))
-                    if size > min_download_size:
-                        start_download = timer_class.TimerAPI()
-                        start_download.start()
-                        logging.info(" Going to download image, size=%d" % size)
-                        _, size = self.download_image(repo_name, digest)
-                        dl_time_millis = start_download.diff_in_millis()
-                        tc.add_stat(dl_time_millis, size)
-                        i += 1
-                    next_digest_idx = digest_iter.next()
+            for i in range(c.cycles):
+                logging.info(f" Cycle {i+1}/{c.cycles}: repo: {repo_name}")
+                tag_iter = random_iter.RandomIter()
+                digest_iter = random_iter.RandomIter()
+                tag_iter.init(len(tags))
                 next_tag_idx = tag_iter.next()
+                while next_tag_idx is not None:
+                    tag = tags[next_tag_idx]
+                    digests = self.get_manifest_by_tag(repo_name, tag)
+                    for d in digests:
+                        if const.Debug.print_debug_info:
+                            logging.debug('Digest: %s' % d)
+                    i = 1
+                    # now = datetime.datetime.now()
+                    digest_iter.init(len(digests))
+                    next_digest_idx = digest_iter.next()
+                    #for digest in digests:
+                    while next_digest_idx is not None:
+                        digest = digests[next_digest_idx]
+                        size = self.get_image_size(repo_name, digest)
+                        logging.debug(' image size=%d' % int(size))
+                        if size > min_download_size:
+                            start_download = timer_class.TimerAPI()
+                            start_download.start()
+                            logging.info(" Going to download image, size=%d" % size)
+                            _, size = self.download_image(repo_name, digest)
+                            dl_time_millis = start_download.diff_in_millis()
+                            tc.add_stat(dl_time_millis, size)
+                            i += 1
+                        next_digest_idx = digest_iter.next()
+                    next_tag_idx = tag_iter.next()
         const.DEBUG.pop_debug_level()
         tc.print_stats()
         return tc.bandwidth()

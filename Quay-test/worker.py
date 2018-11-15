@@ -21,12 +21,11 @@ class Worker(threading.Thread):
         self.bandwidth = 0
         self.total_capacity = 0
 
-    #todo add num-iterations here
     def run(self):
         logging.debug('Start worker')
         docker_apis = DockerV2Apis()
         try:
-            session = docker_apis.login(TEST_USERNAME, TEST_PWD, requests)
+            session = docker_apis.login(None, None, requests)
 
             # quay_apis = QuayApis(session)
             #

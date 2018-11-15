@@ -99,7 +99,9 @@ Q_API_REPOSITORY = 'repository'
 # List of docker V2 APIs (as described in docker documentation) - These APIs
 # are implemented by Quay, but quay does not control its definifion.
 #
-DOCKER_API_URL = QUAY_URL + 'v2/'
+DOCKER_API_URL_OLD = QUAY_URL + 'v2/'
+
+
 #
 D_API_AUTH = 'auth'
 D_API_CATALOG = '_catalog'
@@ -110,3 +112,11 @@ TEST_TAG = 'use_in_test'
 
 REP_NAME1 = 'test_runner/test1'
 IMG_DIGEST1 = 'sha256:7771a5939ec5f4ce72f9659be8c212b5862139de58c4e68e67b30601063048d8'
+
+####
+# Default Values
+####
+DEF_NUM_THREADS = 2
+DEF_CYCLES = 1
+DEF_VERBOSE = False
+DEF_USE_HTTPS = False

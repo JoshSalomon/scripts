@@ -4,8 +4,9 @@ import logging
 
 import timer_class
 import worker
+import config
 
-NUM_THREADS = 2
+
 # import quay_constants as const
 
 try:
@@ -16,6 +17,7 @@ except ImportError as ie:
     requests = None
     sys.exit(0)
 
+config = config.Config()
 # def get_image_ancestors(img_id):
 #     url = const.QUAY_API_URL + '/' + const.NAMESPACE + '/' + const.REPOSITORY + '/image/' + img_id
 #     print('request:')
@@ -89,12 +91,17 @@ def wait_for_all_threads(threads):
     return
 
 
-def run_main(num_threads: int = NUM_THREADS):
-    logging.basicConfig(level=logging.INFO, format='[%(levelname)-8s] (%(threadName)-10s) %(message)s',)
+def run_main():
+    if config.verbose:
+        lvl = logging.DEBUG
+    else:
+        lvl = logging.INFO
+    logging.basicConfig(level=lvl, format='[%(levelname)-8s] (%(threadName)-10s) %(message)s',)
     threads = []
     tc = None
     try:
-        for i in range(num_threads):
+        logging.info(f"Starting {config.threads} threads")
+        for i in range(config.threads):
             t = worker.Worker('Thread-%d' % i)
             threads.append(t)
         start_all_threads(threads)
@@ -116,12 +123,13 @@ def run_main(num_threads: int = NUM_THREADS):
     #  do a proper upper and lower bounds of the stats (by taking the time of the fastest and slowest threads.
     #  - make sure the number is not an over estimation.
     time_in_millis = tc.diff_in_millis()
-    lower_bound_bw = (total_cap / 1024) / (time_in_millis / 1000)
-    logging.info("Done, total bandwidth = %d KB/s" % total_bw)
-    logging.info("Total time: %d ms, lower bound bandwidth = %d KB/s" % (time_in_millis, int(lower_bound_bw)))
+    if time_in_millis > 0:
+        lower_bound_bw = (total_cap / 1024) / (time_in_millis / 1000)
+        logging.info("Done, total bandwidth = %d KB/s" % total_bw)
+        logging.info("Total time: %d ms, lower bound bandwidth = %d KB/s" % (time_in_millis, int(lower_bound_bw)))
     exit(0)
 
 
 if __name__ == "__main__":
     # execute only if run as a script
-    run_main(NUM_THREADS)
+    run_main()

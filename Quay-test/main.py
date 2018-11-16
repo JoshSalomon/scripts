@@ -91,6 +91,10 @@ def wait_for_all_threads(threads):
     return
 
 
+#todo performance improvement:
+# Create a pre-process stage that iterates over the repository and filters out the
+# small images, leaving only the big ones - then the read all images can skip reading
+# headers for all the small images
 def run_main():
     if config.verbose:
         lvl = logging.DEBUG

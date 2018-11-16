@@ -1,7 +1,3 @@
-# import json
-import os
-#import datetime
-# from requests import Session
 import quay_constants as const
 from abstract_api import AbstractAPIs
 import gzip
@@ -41,7 +37,7 @@ class DockerV2Apis(AbstractAPIs):
         if const.DEBUG.print_response:
             logging.debug('== 3 headers ==')
             logging.debug(r.headers)
-            logging.debugprint('== 4 content in lines ==')
+            logging.debug('== 4 content in lines ==')
             self.print_content(r.content.splitlines())
 
         if const.DEBUG.print_decoded_response:
@@ -92,6 +88,7 @@ class DockerV2Apis(AbstractAPIs):
 
     def get_image_size(self, repo_name, image_id, b_decompress=False):
         size = 0
+        url = ""
         try:
             url = c.docker_api_url() + repo_name + '/blobs/' + image_id
             r = self.head(url, timeout=30)
@@ -154,6 +151,7 @@ class DockerV2Apis(AbstractAPIs):
 
         return digests
 
+    #todo make min download size configurable from command line.
     def pull_all_images(self, repo_name, min_download_size = 50 * 1024):
         const.DEBUG.push_add_debug_info()
         success, tags = self.get_tags_in_repo(repo_name)

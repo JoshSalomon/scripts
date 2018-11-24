@@ -2,7 +2,7 @@
 import threading
 import logging
 
-from quay_constants import TEST_USERNAME, TEST_PWD
+from quay_constants import AppException
 from docker_v2_apis import DockerV2Apis
 
 try:
@@ -15,15 +15,16 @@ except ImportError as ie:
 
 
 class Worker(threading.Thread):
-    def __init__(self, name):
+    def __init__(self, name, ip_address):
         threading.Thread.__init__(self)
         self.name = name
         self.bandwidth = 0
         self.total_capacity = 0
+        self.ip_address = ip_address
 
     def run(self):
         logging.debug('Start worker')
-        docker_apis = DockerV2Apis()
+        docker_apis = DockerV2Apis(self.ip_address)
         try:
             session = docker_apis.login(None, None, requests)
 
@@ -45,12 +46,19 @@ class Worker(threading.Thread):
             # get the first repository
             #
             i = 0
+            n_repos = len(repos)
             for repo_name in repos:
                 # repo_name = repos[i]
-                logging.info('repo %d: %s' % (i, repo_name))
+                logging.info('repo %d/%d: %s' % (i+1, n_repos, repo_name))
                 i += 1
                 self.bandwidth, self.total_capacity = docker_apis.pull_all_images(repo_name)
 
+        except AppException as ae:
+            logging.error(" Exception: <%s>" % ae.__str__())
+            logging.error(" Exception: <%s>" % ae.__msg__)
+            logging.error(" == Cause: <%s>" % ae.__cause__)
+            logging.error(" == Context <%s>" % ae.__context__)
+            exit(1)
         except Exception as e:
             logging.error(" Exception: <%s>" % e.__str__())
             logging.error(" == Cause: <%s>" % e.__cause__)

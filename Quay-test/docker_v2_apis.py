@@ -6,18 +6,20 @@ import timer_class
 import random_iter
 import logging
 import config
+import requests
 
 c = config.Config()
 
 
 class DockerV2Apis(AbstractAPIs):
-    def __init__(self):
+    def __init__(self, ip_address):
         super().__init__()
+        self.ip_address = ip_address
 
     def login(self, username, pwd, requests):
         params = {
             'account': c.username,
-            'service': const.QUAY_DOMAIN,
+            'service': c.docker_api_domain(self.ip_address),
             'scope': [],
         }
         #todo take username/password from c.
@@ -29,22 +31,23 @@ class DockerV2Apis(AbstractAPIs):
         auth = (c.username, c.password)
         self.session = requests.session()
         logging.debug(self.session)
-        url = c.docker_api_url() + const.D_API_AUTH
+        url = c.docker_api_url(self.ip_address) + const.D_API_AUTH
         r = self.get(url, params=params, auth=auth, timeout=30)
 
-        decoded_request = self.json_decoder.decode(r.text)
-        token = decoded_request['token']
-        if const.DEBUG.print_response:
-            logging.debug('== 3 headers ==')
-            logging.debug(r.headers)
-            logging.debug('== 4 content in lines ==')
-            self.print_content(r.content.splitlines())
-
-        if const.DEBUG.print_decoded_response:
-            logging.debug("== token: %s" % token)
-
         if r.status_code / 100 != 2:
-            return None
+            raise const.AppException(f" Login failed, rc={r.status_code}")
+
+        if r is not None and r.headers['Content-Type'] == 'application/json':
+            decoded_request = self.json_decoder.decode(r.text)
+            token = decoded_request['token']
+            if const.DEBUG.print_response:
+                logging.debug('== 3 headers ==')
+                logging.debug(r.headers)
+                logging.debug('== 4 content in lines ==')
+                self.print_content(r.content.splitlines())
+
+            if const.DEBUG.print_decoded_response:
+                logging.debug("== token: %s" % token)
 
         # self.auth_token = 'Bearer ' + token
         self.auth_token = 'Bearer ' + token
@@ -59,7 +62,7 @@ class DockerV2Apis(AbstractAPIs):
             i += 1
 
     def get_repositories(self):
-        url = c.docker_api_url() + const.D_API_CATALOG
+        url = c.docker_api_url(self.ip_address) + const.D_API_CATALOG
         r = self.get(url, timeout=30)
         if r.status_code >= 400:
             return
@@ -75,7 +78,7 @@ class DockerV2Apis(AbstractAPIs):
             return decoded_request['repositories']
 
     def is_supported(self):
-        url = c.docker_api_url()
+        url = c.docker_api_url(self.ip_address)
         #    print('request: (token: %s)' % token)
         r = self.get(url, timeout=30)
         success_status_code = r.status_code / 100 == 2
@@ -90,7 +93,7 @@ class DockerV2Apis(AbstractAPIs):
         size = 0
         url = ""
         try:
-            url = c.docker_api_url() + repo_name + '/blobs/' + image_id
+            url = c.docker_api_url(self.ip_address) + repo_name + '/blobs/' + image_id
             r = self.head(url, timeout=30)
             logging.debug(r.headers)
             if r.status_code / 100 == 2:
@@ -101,27 +104,30 @@ class DockerV2Apis(AbstractAPIs):
         return size
 
     def download_image(self, repo_name, image_id, b_decompress=False):
-        url = c.docker_api_url() + repo_name + '/blobs/' + image_id
-        r = self.get(url, timeout=30)
+        url = c.docker_api_url(self.ip_address) + repo_name + '/blobs/' + image_id
+        r = self.get(url, timeout=300, headers={'Accept-encoding': 'gzip, application/octet-stream'})
         data = None
         size = 0
-        if r.headers['Content-Encoding'] == 'gzip':
-            bio = BytesIO(r.content)
-            size = bio.seek(0, SEEK_END)
-            logging.debug('compressed size = %d' % int(size))
-            if b_decompress:
-                bio.seek(0)
-                data = gzip.decompress(bio.read())
-                if const.Debug.print_processed_response:
-                    logging.debug(" decoding gzip response")
-                    logging.debug("Decompressed size = %d" % len(data))
-                    logging.debug(data[:64])
+        try:
+            if r.headers['Content-Encoding'] == 'gzip':
+                bio = BytesIO(r.content)
+                size = bio.seek(0, SEEK_END)
+                logging.debug('compressed size = %d' % int(size))
+                if b_decompress:
+                    bio.seek(0)
+                    data = gzip.decompress(bio.read())
+                    if const.Debug.print_processed_response:
+                        logging.debug(" decoding gzip response")
+                        logging.debug("Decompressed size = %d" % len(data))
+                        logging.debug(data[:64])
+        except:
+            size = r.headers['Content-Length']
             # data1 = str(data, 'utf-8')
             # print(data1[:64])
         return data, size
 
     def get_tags_in_repo(self, repo_name):
-        url = c.docker_api_url() + repo_name + '/tags/list'
+        url = c.docker_api_url(self.ip_address) + repo_name + '/tags/list'
         r = self.get(url, timeout=30)
         success = r.status_code / 100 == 2
         tags = []
@@ -136,7 +142,7 @@ class DockerV2Apis(AbstractAPIs):
         return success, tags
 
     def get_manifest_by_tag(self, repo_name, tag):
-        url = c.docker_api_url() + repo_name + '/manifests/' + tag
+        url = c.docker_api_url(self.ip_address) + repo_name + '/manifests/' + tag
         r = self.get(url, timeout=30)
         decoded_request = self.json_decoder.decode(r.text)
         digests = []

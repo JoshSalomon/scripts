@@ -100,13 +100,14 @@ def run_main():
         lvl = logging.DEBUG
     else:
         lvl = logging.INFO
+
     logging.basicConfig(level=lvl, format='[%(levelname)-8s] (%(threadName)-10s) %(message)s',)
     threads = []
     tc = None
     try:
         logging.info(f"Starting {config.threads} threads")
         for i in range(config.threads):
-            t = worker.Worker('Thread-%d' % i)
+            t = worker.Worker('Thread-%d' % i, config.quay_ip)
             threads.append(t)
         start_all_threads(threads)
         tc = timer_class.TimerAPI()
@@ -129,8 +130,12 @@ def run_main():
     time_in_millis = tc.diff_in_millis()
     if time_in_millis > 0:
         lower_bound_bw = (total_cap / 1024) / (time_in_millis / 1000)
-        logging.info("Done, total bandwidth = %d KB/s" % total_bw)
-        logging.info("Total time: %d ms, lower bound bandwidth = %d KB/s" % (time_in_millis, int(lower_bound_bw)))
+        logging.info("Done, total bandwidth = %d KB/s (%d MB/s)" % (total_bw, int(total_bw / 1024)))
+        if int(lower_bound_bw) < 20480:
+            logging.info("Total time: %d ms, lower bound bandwidth = %d KB/s" % (time_in_millis, int(lower_bound_bw)))
+        else:
+            lower_bound_bw /= 1024
+            logging.info("Total time: %d ms, lower bound bandwidth = %d MB/s" % (time_in_millis, int(lower_bound_bw)))
     exit(0)
 
 

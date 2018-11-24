@@ -30,8 +30,8 @@ class TimerAPI(object):
         aggr_time = 0
         aggr_capacity = 0
         for s in self.stats:
-            aggr_time += s[0]
-            aggr_capacity += s[1]
+            aggr_time += int(s[0])
+            aggr_capacity += int(s[1])
         self.total_capacity = aggr_capacity
         if aggr_time != 0:
             self.bandwidth_kbs = (aggr_capacity / 1024) / (aggr_time / 1000)

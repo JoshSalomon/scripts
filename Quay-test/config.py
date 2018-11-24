@@ -17,7 +17,7 @@ class Config(object):
         self.__threads = quay_constants.DEF_NUM_THREADS
         self.__cycles = quay_constants.DEF_CYCLES
         self.__quay_ip = quay_constants.QUAY_DOMAIN
-        self.__quay_port = None
+        self.__quay_port = quay_constants.QUAY_PORT
         self.__use_https = quay_constants.DEF_USE_HTTPS
         self.__verbose = quay_constants.DEF_VERBOSE
         self.__username = quay_constants.TEST_USERNAME
@@ -88,16 +88,28 @@ class Config(object):
         self.__password = password
         self.__default_password = False
 
-    def docker_api_url(self):
+    def docker_api_url(self, ip_address):
         rc = ""
         if self.__use_https:
             rc += "https://"
         else:
             rc += "http://"
-        rc += self.__quay_ip
+        if ip_address is not None:
+            rc += ip_address
+        else:
+            rc += self.__quay_ip
         if self.__quay_port is not None:
             rc += (":%d" % self.__quay_port)
         rc += "/v2/"
+        return rc
+
+    def docker_api_domain(self, ip_address):
+        if ip_address is not None:
+            rc = ip_address
+        else:
+            rc = self.__quay_ip
+        if self.__quay_port is not None:
+            rc += (":%d" % self.__quay_port)
         return rc
 
     def print(self):

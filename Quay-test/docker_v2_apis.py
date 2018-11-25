@@ -16,7 +16,7 @@ class DockerV2Apis(AbstractAPIs):
         super().__init__()
         self.ip_address = ip_address
 
-    def login(self, username, pwd, requests):
+    def login(self, username=None, pwd=None):
         params = {
             'account': c.username,
             'service': c.docker_api_domain(self.ip_address),
@@ -29,7 +29,7 @@ class DockerV2Apis(AbstractAPIs):
         #    pwd = os.environ["QUAY_PWD"]
 
         auth = (c.username, c.password)
-        self.session = requests.session()
+        self.session = requests.Session()
         logging.debug(self.session)
         url = c.docker_api_url(self.ip_address) + const.D_API_AUTH
         r = self.get(url, params=params, auth=auth, timeout=30)
@@ -120,7 +120,7 @@ class DockerV2Apis(AbstractAPIs):
                         logging.debug(" decoding gzip response")
                         logging.debug("Decompressed size = %d" % len(data))
                         logging.debug(data[:64])
-        except:
+        except Exception:
             size = r.headers['Content-Length']
             # data1 = str(data, 'utf-8')
             # print(data1[:64])
@@ -144,6 +144,9 @@ class DockerV2Apis(AbstractAPIs):
     def get_manifest_by_tag(self, repo_name, tag):
         url = c.docker_api_url(self.ip_address) + repo_name + '/manifests/' + tag
         r = self.get(url, timeout=30)
+        if r.status_code / 100 == 5:
+            return []
+
         decoded_request = self.json_decoder.decode(r.text)
         digests = []
         for line in decoded_request['fsLayers']:

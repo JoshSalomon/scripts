@@ -15,18 +15,20 @@ except ImportError as ie:
 
 
 class Worker(threading.Thread):
-    def __init__(self, name, ip_address):
+    def __init__(self, name, credentials):
         threading.Thread.__init__(self)
         self.name = name
         self.bandwidth = 0
         self.total_capacity = 0
-        self.ip_address = ip_address
+        self.ip_address = credentials[0]
+        self.d_api = credentials[1]
+
 
     def run(self):
         logging.debug('Start worker')
-        docker_apis = DockerV2Apis(self.ip_address)
+        docker_apis = self.d_api
         try:
-            session = docker_apis.login(None, None, requests)
+            session = docker_apis.login(None, None)
 
             # quay_apis = QuayApis(session)
             #

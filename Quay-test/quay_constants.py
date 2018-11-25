@@ -85,8 +85,8 @@ DEBUG = Debug()  # Control amount of output
 
 #  QUAY_DOMAIN = 'quay.io'
 #  QUAY_URL = 'https://' + QUAY_DOMAIN
-#QUAY_DOMAIN = 'andromeda03.sales.lab.tlv.redhat.com'
-QUAY_DOMAIN = '10.12.76.154'
+#QUAY_DOMAINS = ['andromeda03.sales.lab.tlv.redhat.com']
+QUAY_DOMAINS = ['10.12.76.154', '10.12.76.167', '10.12.76.119']
 QUAY_PORT = None
 ####QUAY_URL = 'http://' + QUAY_DOMAIN + '/'
 #MAGE_ID_LAST = '3690474eb5b4b26fdfbd89c6e159e8cc376ca76ef48032a30fa6aafd56337880'
@@ -121,7 +121,7 @@ TEST_PWD = 'redhat12'
 ####
 # Default Values
 ####
-DEF_NUM_THREADS = 1
+DEF_NUM_THREADS = 3
 DEF_CYCLES = 1
 DEF_VERBOSE = False
 DEF_USE_HTTPS = False

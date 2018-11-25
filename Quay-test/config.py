@@ -16,7 +16,7 @@ class Config(object):
     def __init__(self):
         self.__threads = quay_constants.DEF_NUM_THREADS
         self.__cycles = quay_constants.DEF_CYCLES
-        self.__quay_ip = quay_constants.QUAY_DOMAIN
+        self.__quay_ip = None ## quay_constants.QUAY_DOMAIN
         self.__quay_port = quay_constants.QUAY_PORT
         self.__use_https = quay_constants.DEF_USE_HTTPS
         self.__verbose = quay_constants.DEF_VERBOSE

@@ -5,7 +5,8 @@ import logging
 import timer_class
 import worker
 import config
-
+import quay_constants as const
+import docker_v2_apis as docker_apis
 
 # import quay_constants as const
 
@@ -91,6 +92,24 @@ def wait_for_all_threads(threads):
     return
 
 
+def run_prep():
+    ip = ""
+    credentials = []
+    for i in range(config.threads):
+        try:
+            ip = const.QUAY_DOMAINS[i % len(const.QUAY_DOMAINS)]
+            d_api = docker_apis.DockerV2Apis(ip)
+            session = d_api.login()
+            logging.debug(f"Logging to {ip}, session=<{session}>, stat")
+            credentials.append((ip, d_api))
+        except const.AppException as ae:
+            #
+            # login failed
+            #
+            logging.info(f"Failed logging in to server {ip} - msg: {ae.__msg__}")
+    return credentials
+
+
 #todo performance improvement:
 # Create a pre-process stage that iterates over the repository and filters out the
 # small images, leaving only the big ones - then the read all images can skip reading
@@ -104,10 +123,13 @@ def run_main():
     logging.basicConfig(level=lvl, format='[%(levelname)-8s] (%(threadName)-10s) %(message)s',)
     threads = []
     tc = None
+    credentials = run_prep()
+
     try:
         logging.info(f"Starting {config.threads} threads")
-        for i in range(config.threads):
-            t = worker.Worker('Thread-%d' % i, config.quay_ip)
+        n_servers = len(const.QUAY_DOMAINS)
+        for i in range(len(credentials)):
+            t = worker.Worker('Thread-%d' % i, credentials[i])
             threads.append(t)
         start_all_threads(threads)
         tc = timer_class.TimerAPI()
@@ -124,6 +146,7 @@ def run_main():
         bw, cap = t.get_bandwidth()
         total_bw += bw
         total_cap += cap
+        total_bw += bw
     #todo:
     #  do a proper upper and lower bounds of the stats (by taking the time of the fastest and slowest threads.
     #  - make sure the number is not an over estimation.
@@ -140,5 +163,6 @@ def run_main():
 
 
 if __name__ == "__main__":
-    # execute only if run as a script
+    # execute only if run as a script - this is always debug run
+    config.set_verbose(True)
     run_main()

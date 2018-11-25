@@ -108,7 +108,6 @@ QUAY_PORT = None
 #
 ####DOCKER_API_URL_OLD = QUAY_URL + 'v2/'
 
-
 #
 D_API_AUTH = 'auth'
 D_API_CATALOG = '_catalog'

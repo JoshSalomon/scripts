@@ -1,1 +1,0 @@
-/home/jsalomon/Work/quay/test/registry/protocols.py

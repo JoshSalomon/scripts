@@ -5,8 +5,10 @@ from io import BytesIO, SEEK_END
 import timer_class
 import random_iter
 import logging
-import config
 import requests
+
+import config
+import docker_image
 
 c = config.Config()
 
@@ -160,8 +162,58 @@ class DockerV2Apis(AbstractAPIs):
 
         return digests
 
+    def push_single_image(self, repo_name, dckr_image: docker_image.DockerImage, header=None):
+        #
+        # upload is a 2 phase process, first POST a message to the blobs/uploads API
+        # then get a url into which we need to PATCH the image
+        #
+        url = c.docker_api_url(self.ip_address) + repo_name + '/blobs/uploads/'
+        r = self.post(url, timeout=12)
+        failure = r.status_code / 100 != 2
+        if failure:
+            logging.error(f'**Failed to start upload rc={r.status_code}')
+            logging.error(r.headers)
+            logging.error(r.content)
+            raise const.AppException(f'Failed starting upload, rc={r.status_code}')
+        upload_uuid = r.headers['Docker-Upload-UUID']
+        new_upload_location = r.headers['Location']
+        logging.debug(f'Starting upload {upload_uuid} to {new_upload_location}')
+        # phase 2 starts here...
+        r = self.patch(new_upload_location, data=dckr_image.image_bytes, headers=header)
+        logging.debug(f'Upload of image completed, rc={r.status_code}')
+        failure = r.status_code / 100 != 2
+        if failure:
+            logging.error(f'Failed loading the image bytes, rc={r.status_code}')
+            logging.error(r.headers)
+            logging.error(r.content)
+            raise const.AppException(f'Failed loading image bytes, rc={r.status_code}')
+
+        # Complete the process by the final message
+        r = self.put(new_upload_location, params=dict(digest=dckr_image.checksum))
+        failure = r.status_code / 100 != 2
+        if failure:
+            logging.error(f'Failed adding the digest, rc={r.status_code}')
+            logging.error(r.headers)
+            logging.error(r.content)
+            raise const.AppException(f'Failed adding the digest, rc={r.status_code}')
+
+        assert r.headers['Docker-Content-Digest'] == dckr_image.checksum
+        # todo - add here head command for checking the upload.
+
+        # Last phase - write the manifest
+        manifest_headers = {'Content-Type': 'application/json'}
+        manifest_headers.update(header)
+        url = c.docker_api_url(self.ip_address) + repo_name + f'/manifests/{dckr_image.tag}'
+        r = self.put(url, data=dckr_image.image_bytes, headers=manifest_headers)
+        failure = r.status_code / 100 != 2
+        if failure:
+            logging.error(f'Failed adding the manifest, rc={r.status_code}')
+            logging.error(r.headers)
+            logging.error(r.content)
+            raise const.AppException(f'Failed adding the manifest, rc={r.status_code}')
+
     #todo make min download size configurable from command line.
-    def pull_all_images(self, repo_name, min_download_size = 50 * 1024):
+    def pull_all_images(self, repo_name, min_download_size=50 * 1024):
         const.DEBUG.push_add_debug_info()
         success, tags = self.get_tags_in_repo(repo_name)
         tc = timer_class.TimerAPI()

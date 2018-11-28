@@ -4,6 +4,7 @@ import logging
 
 import timer_class
 import worker
+import pusher
 import config
 import quay_constants as const
 import docker_v2_apis as docker_apis
@@ -86,16 +87,25 @@ def start_all_threads(threads):
     return
 
 
-def wait_for_all_threads(threads):
+def wait_for_all_threads(threads, push_threads=[]):
     for t in threads:
-        t.join()
+        if isinstance(t, worker.Worker):
+            t.join()
+
+    for pt in push_threads:
+        if isinstance(pt, pusher.Pusher):
+            pt.__stop_event__.set()
+            pt.join()
+
     return
 
 
-def run_prep():
+def run_prep(n_threads=0):
     ip = ""
     credentials = []
-    for i in range(config.threads):
+    if n_threads <= 0:
+        n_threads = config.threads
+    for i in range(n_threads):
         try:
             ip = const.QUAY_DOMAINS[i % len(const.QUAY_DOMAINS)]
             d_api = docker_apis.DockerV2Apis(ip)
@@ -108,6 +118,12 @@ def run_prep():
             #
             logging.info(f"Failed logging in to server {ip} - msg: {ae.__msg__}")
     return credentials
+
+
+def test_push(credentials, repo_name):
+    p = pusher.Pusher("thread-name", credentials, repo_name)
+    p.push()
+    return
 
 
 #todo performance improvement:
@@ -123,11 +139,13 @@ def run_main():
     logging.basicConfig(level=lvl, format='[%(levelname)-8s] (%(threadName)-10s) %(message)s',)
     threads = []
     tc = None
-    credentials = run_prep()
+    #credentials = run_prep()
 
+    credentials = run_prep(1)
+    test_push(credentials[0], 'test_runner/test1')
+    exit(0)
     try:
         logging.info(f"Starting {config.threads} threads")
-        n_servers = len(const.QUAY_DOMAINS)
         for i in range(len(credentials)):
             t = worker.Worker('Thread-%d' % i, credentials[i])
             threads.append(t)

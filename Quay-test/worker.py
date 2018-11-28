@@ -4,6 +4,7 @@ import logging
 
 from quay_constants import AppException
 from docker_v2_apis import DockerV2Apis
+from base_thread import LoadTestThread
 
 try:
     import requests
@@ -14,15 +15,12 @@ except ImportError as ie:
     exit(0)
 
 
-class Worker(threading.Thread):
+class Worker(LoadTestThread):
+
     def __init__(self, name, credentials):
-        threading.Thread.__init__(self)
-        self.name = name
+        super().__init__(name, credentials)
         self.bandwidth = 0
         self.total_capacity = 0
-        self.ip_address = credentials[0]
-        self.d_api = credentials[1]
-
 
     def run(self):
         logging.debug('Start worker')

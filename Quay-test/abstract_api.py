@@ -3,6 +3,7 @@ import quay_constants as const
 import logging
 import requests
 
+
 class AbstractAPIs(object):
     def __init__(self, session=None):
         self.session = session
@@ -56,10 +57,54 @@ class AbstractAPIs(object):
         if const.DEBUG.print_request:
             logging.debug('HEAD: %s' % url)
         r = self.session.head(url, **kwargs)
-        if const.DEBUG.print_status_code:
+        failure = r.status_code / 100 != 2
+        if failure or const.DEBUG.print_status_code:
             logging.debug("Status code = %d" % r.status_code)
-        if const.DEBUG.print_response:
+        if failure or const.DEBUG.print_response:
             logging.debug(r)
-        if const.DEBUG.print_headers:
+        if failure or const.DEBUG.print_headers:
+            logging.debug(r.headers)
+        return r
+
+    def post(self, url, **kwargs):
+        self.set_token()
+        logging.debug(self.session.headers)
+        if const.DEBUG.print_request:
+            logging.debug('POST: %s' % url)
+        r = self.session.post(url, **kwargs)
+        failure = r.status_code / 100 != 2
+        if failure or const.DEBUG.print_status_code:
+            logging.debug("Status code = %d" % r.status_code)
+        if failure or const.DEBUG.print_response:
+            logging.debug(r)
+        if failure or const.DEBUG.print_headers:
+            logging.debug(r.headers)
+        return r
+
+    def patch(self, url, **kwargs):
+        self.set_token()
+        if const.DEBUG.print_request:
+            logging.debug('PATCH: %s' % url)
+        r = self.session.patch(url, **kwargs)
+        failure = r.status_code / 100 != 2
+        if failure or const.DEBUG.print_status_code:
+            logging.debug("Status code = %d" % r.status_code)
+        if failure or const.DEBUG.print_response:
+            logging.debug(r)
+        if failure or const.DEBUG.print_headers:
+            logging.debug(r.headers)
+        return r
+
+    def put(self, url, **kwargs):
+        self.set_token()
+        if const.DEBUG.print_request:
+            logging.debug('PUT: %s' % url)
+        r = self.session.put(url, **kwargs)
+        failure = r.status_code / 100 != 2
+        if failure or const.DEBUG.print_status_code:
+            logging.debug("Status code = %d" % r.status_code)
+        if failure or const.DEBUG.print_response:
+            logging.debug(r)
+        if failure or const.DEBUG.print_headers:
             logging.debug(r.headers)
         return r

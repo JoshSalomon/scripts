@@ -9,6 +9,7 @@ import requests
 
 import config
 import docker_image
+from pusher import CHUNK_SIZE
 
 c = config.Config()
 
@@ -18,11 +19,11 @@ class DockerV2Apis(AbstractAPIs):
         super().__init__()
         self.ip_address = ip_address
 
-    def login(self, username=None, pwd=None):
+    def login(self, username=None, pwd=None, scopes=[]):
         params = {
             'account': c.username,
             'service': c.docker_api_domain(self.ip_address),
-            'scope': [],
+            'scope': scopes,
         }
         #todo take username/password from c.
         #if username is None:
@@ -162,6 +163,28 @@ class DockerV2Apis(AbstractAPIs):
 
         return digests
 
+    def patch_image_in_chunks(self, url, dckr_image: docker_image.DockerImage, headers):
+        i = 0
+        start_byte = 0
+        logging.debug(f" *** Going to push image in chunks - image size={dckr_image.size}")
+        logging.debug(f" *** Going to use {int(dckr_image.size/CHUNK_SIZE)} chunks")
+        while start_byte < dckr_image.size:
+            end_byte = min(start_byte + CHUNK_SIZE, dckr_image.size)
+            patch_header = {'Range': f'bytes={start_byte}-{end_byte}'}
+            patch_header.update(headers)
+            content_chunk = dckr_image.image_bytes[start_byte:end_byte]
+            r = self.patch(url, data=content_chunk, headers=patch_header)
+            logging.debug(f"==> Uploaded chunk {i}, status={r.status_code}")
+            i = i + 1
+            failure = int(r.status_code / 100) != 2
+            if failure:
+                logging.error(f'Failed loading the image bytes, chunk #{i}, size{dckr_image.size}: rc={r.status_code}')
+                logging.error(r.headers)
+                logging.error(r.content)
+                raise const.AppException(f'Failed loading image bytes, (chunk {i}) rc={r.status_code}')
+            start_byte = start_byte + CHUNK_SIZE
+        return
+
     def push_single_image(self, repo_name, dckr_image: docker_image.DockerImage, header=None):
         #
         # upload is a 2 phase process, first POST a message to the blobs/uploads API
@@ -169,7 +192,7 @@ class DockerV2Apis(AbstractAPIs):
         #
         url = c.docker_api_url(self.ip_address) + repo_name + '/blobs/uploads/'
         r = self.post(url, timeout=12)
-        failure = r.status_code / 100 != 2
+        failure = int(r.status_code / 100) != 2
         if failure:
             logging.error(f'**Failed to start upload rc={r.status_code}')
             logging.error(r.headers)
@@ -179,18 +202,19 @@ class DockerV2Apis(AbstractAPIs):
         new_upload_location = r.headers['Location']
         logging.debug(f'Starting upload {upload_uuid} to {new_upload_location}')
         # phase 2 starts here...
-        r = self.patch(new_upload_location, data=dckr_image.image_bytes, headers=header)
-        logging.debug(f'Upload of image completed, rc={r.status_code}')
-        failure = r.status_code / 100 != 2
-        if failure:
-            logging.error(f'Failed loading the image bytes, rc={r.status_code}')
-            logging.error(r.headers)
-            logging.error(r.content)
-            raise const.AppException(f'Failed loading image bytes, rc={r.status_code}')
+        self.patch_image_in_chunks(new_upload_location, dckr_image, header)
+        #r = self.patch(new_upload_location, data=dckr_image.image_bytes, headers=header, timeout=3000)
+#        logging.debug(f'Upload of image completed, rc={r.status_code}')
+#        failure = int(r.status_code / 100) != 2
+#        if failure:
+#            logging.error(f'Failed loading the image bytes, rc={r.status_code}')
+#            logging.error(r.headers)
+#            logging.error(r.content)
+#            raise const.AppException(f'Failed loading image bytes, rc={r.status_code}')
 
         # Complete the process by the final message
         r = self.put(new_upload_location, params=dict(digest=dckr_image.checksum))
-        failure = r.status_code / 100 != 2
+        failure = int(r.status_code / 100) != 2
         if failure:
             logging.error(f'Failed adding the digest, rc={r.status_code}')
             logging.error(r.headers)
@@ -204,8 +228,9 @@ class DockerV2Apis(AbstractAPIs):
         manifest_headers = {'Content-Type': 'application/json'}
         manifest_headers.update(header)
         url = c.docker_api_url(self.ip_address) + repo_name + f'/manifests/{dckr_image.tag}'
-        r = self.put(url, data=dckr_image.image_bytes, headers=manifest_headers)
-        failure = r.status_code / 100 != 2
+        logging.debug(dckr_image.manifest.json)
+        r = self.put(url, data=dckr_image.manifest.json, headers=manifest_headers)
+        failure = int(r.status_code / 100) != 2
         if failure:
             logging.error(f'Failed adding the manifest, rc={r.status_code}')
             logging.error(r.headers)

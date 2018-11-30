@@ -26,3 +26,7 @@ class DockerImage(object):
     @property
     def tag(self):
         return self.__tag__
+
+    @property
+    def size(self):
+        return self.layer_dict['Size']

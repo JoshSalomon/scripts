@@ -106,10 +106,11 @@ def run_prep(n_threads=0):
     if n_threads <= 0:
         n_threads = config.threads
     for i in range(n_threads):
+        scopes = [f'repository:{const.TEST_USERNAME}/test1:*']
         try:
             ip = const.QUAY_DOMAINS[i % len(const.QUAY_DOMAINS)]
             d_api = docker_apis.DockerV2Apis(ip)
-            session = d_api.login()
+            session = d_api.login(scopes=scopes)
             logging.debug(f"Logging to {ip}, session=<{session}>, stat")
             credentials.append((ip, d_api))
         except const.AppException as ae:
@@ -122,8 +123,8 @@ def run_prep(n_threads=0):
 
 def test_push(credentials, repo_name):
     p = pusher.Pusher("thread-name", credentials, repo_name)
-    p.push()
-    return
+    p.start()
+    return p
 
 
 #todo performance improvement:
@@ -142,7 +143,8 @@ def run_main():
     #credentials = run_prep()
 
     credentials = run_prep(1)
-    test_push(credentials[0], 'test_runner/test1')
+    p = test_push(credentials[0], 'test_runner/test1')
+    p.join()
     exit(0)
     try:
         logging.info(f"Starting {config.threads} threads")

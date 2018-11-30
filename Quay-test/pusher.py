@@ -26,7 +26,8 @@ GB_IN_BYTES = 1024 * MB_IN_BYTES
 
 DEF_MINSIZE = 100 * KB_IN_BYTES
 # DEF_MAXSIZE = 2 * GB_IN_BYTES
-DEF_MAXSIZE = 5 * MB_IN_BYTES  # For debug use smaller sizes.
+DEF_MAXSIZE = 80 * MB_IN_BYTES  # For debug use smaller sizes.
+CHUNK_SIZE = 2 * MB_IN_BYTES
 
 c = config.Config()
 
@@ -42,7 +43,9 @@ class Pusher(LoadTestThread):
         #self.jwk.get()
 
     def run(self, wait_multiply=0):
-        # odo - login and keep tokrn in
+        # todo - login and keep token in
+        self.push()
+        return
         time_in_secs = 1
         while not self.__stop_event__.is_set():
             # time_in_secs = push....
@@ -51,7 +54,6 @@ class Pusher(LoadTestThread):
 
     def push(self, n_images=1, min_size=DEF_MINSIZE, max_size=DEF_MAXSIZE):
         options = ProtocolOptions()
-        scopes = [f'repository:{self.__repo_name__}:push,pull']
         tag_rand = random.randint(1024, 1024*1024*16)
         tag_name = '%s%06x' % (self.__tag_prefix__,  tag_rand)
         header = {
@@ -66,7 +68,8 @@ class Pusher(LoadTestThread):
     def build_single_image_manifest(self, tag_name, min_size, max_size):
         image = quay_utils.create_random_image(min_size, max_size, tag_name[len(self.__tag_prefix__):])
         checksum = 'sha256:' + hashlib.sha256(image['contents']).hexdigest()
-        layer_dict = {'id': image['id'], 'parent': '', 'Size': image['Size']}
+#        layer_dict = {'id': image['id'], 'parent': '', 'Size': image['Size']}
+        layer_dict = {'id': image['id'], 'Size': image['Size']}
         builder = quay_utils.DockerSchema1ManifestBuilder('', self.__repo_name__, tag_name)
         builder.add_layer(checksum, json.dumps(layer_dict))
         manifest = builder.build(self.jwk)

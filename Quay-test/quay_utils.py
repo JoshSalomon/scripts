@@ -121,11 +121,15 @@ class DockerSchema1ManifestBuilder(object):
         self._history = []
 
     def add_layer(self, layer_digest, v1_json_metadata):
+        decoder = json.JSONDecoder()
         self._fs_layer_digests.append({
             DOCKER_SCHEMA1_BLOB_SUM_KEY: layer_digest,
         })
+
+#        compatibility_str='{\"id\":\"%s\"'
         self._history.append({
             DOCKER_SCHEMA1_V1_COMPAT_KEY: v1_json_metadata,
+#            DOCKER_SCHEMA1_V1_COMPAT_KEY: decoder.decode(v1_json_metadata),
         })
         return self
 
@@ -156,6 +160,7 @@ class DockerSchema1ManifestBuilder(object):
 
         signer = SIGNER_ALGS[_JWS_SIGNING_ALGORITHM]
 #        signature = b64encode(signer.sign(bytes_to_sign, json_web_key.get_key()))
+        # todo (low) - make it a separate function
         key = RSAKey(kty=json_web_key['kty'],
                      n=json_web_key['n'],
                      e=json_web_key['e'],
@@ -388,6 +393,9 @@ class DockerSchema1Manifest(ManifestInterface):
             raise MalformedSchema1Manifest('malformed manifest data: %s' % ve)
 
         try:
+#            validate_schema(self._parsed, DockerSchema1Manifest.METASCHEMA)
+            print(' type of manifest bytes is %s' % type(manifest_bytes))
+            print(' type of parsed is %s' % type(self._parsed))
             validate_schema(self._parsed, DockerSchema1Manifest.METASCHEMA)
         except ValidationError as ve:
             raise MalformedSchema1Manifest('manifest data does not match schema: %s' % ve)

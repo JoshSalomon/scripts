@@ -56,7 +56,7 @@ class Debug(object):
 
     @property
     def get_debug_level(self):
-        return self.debug_level
+        return self.debug_level;
 
     def push_debug_level(self, new_level):
         self.dl_stack.insert(0, self.get_debug_level)

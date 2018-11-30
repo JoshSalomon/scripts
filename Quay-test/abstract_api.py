@@ -83,9 +83,11 @@ class AbstractAPIs(object):
 
     def patch(self, url, **kwargs):
         self.set_token()
+        timeout = kwargs.pop('timeout', 2)
+        logging.debug(f"*** Fixing timeout = {timeout}")
         if const.DEBUG.print_request:
             logging.debug('PATCH: %s' % url)
-        r = self.session.patch(url, **kwargs)
+        r = self.session.patch(url, **kwargs, timeout=None)
         failure = r.status_code / 100 != 2
         if failure or const.DEBUG.print_status_code:
             logging.debug("Status code = %d" % r.status_code)

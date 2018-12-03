@@ -1,4 +1,3 @@
-
 import sys
 import logging
 
@@ -20,6 +19,8 @@ except ImportError as ie:
     sys.exit(0)
 
 config = config.Config()
+
+
 # def get_image_ancestors(img_id):
 #     url = const.QUAY_API_URL + '/' + const.NAMESPACE + '/' + const.REPOSITORY + '/image/' + img_id
 #     print('request:')
@@ -87,7 +88,9 @@ def start_all_threads(threads):
     return
 
 
-def wait_for_all_threads(threads, push_threads=[]):
+def wait_for_all_threads(threads, push_threads=None):
+    if push_threads is None:
+        push_threads = []
     for t in threads:
         if isinstance(t, worker.Worker):
             t.join()
@@ -113,7 +116,7 @@ def run_prep(n_threads=0):
             session = d_api.login(scopes=scopes)
             logging.debug(f"Logging to {ip}, session=<{session}>, stat")
             credentials.append((ip, d_api))
-        except const.AppException as ae:
+        except const.HttpAppException as ae:
             #
             # login failed
             #
@@ -127,20 +130,16 @@ def test_push(credentials, repo_name):
     return p
 
 
-#todo performance improvement:
-# Create a pre-process stage that iterates over the repository and filters out the
-# small images, leaving only the big ones - then the read all images can skip reading
-# headers for all the small images
-def run_main():
-    if config.verbose:
-        lvl = logging.DEBUG
-    else:
-        lvl = logging.INFO
 
-    logging.basicConfig(level=lvl, format='[%(levelname)-8s] (%(threadName)-10s) %(message)s',)
+# todo performance improvement:
+#  Create a pre-process stage that iterates over the repository and filters out the
+#  small images, leaving only the big ones - then the read all images can skip reading
+#  headers for all the small images
+def run_pull_load():
+    __set_config()
     threads = []
     tc = None
-    #credentials = run_prep()
+    # credentials = run_prep()
 
     credentials = run_prep(1)
     p = test_push(credentials[0], 'test_runner/test1')
@@ -156,7 +155,7 @@ def run_main():
         tc.start()
     except Exception as e:
         logging.error("Unable to start threads, %s" % e.args)
-#        raise e
+    #        raise e
 
     logging.info("Waiting for thread to complete")
     wait_for_all_threads(threads)
@@ -167,7 +166,7 @@ def run_main():
         total_bw += bw
         total_cap += cap
         total_bw += bw
-    #todo:
+    # todo:
     #  do a proper upper and lower bounds of the stats (by taking the time of the fastest and slowest threads.
     #  - make sure the number is not an over estimation.
     time_in_millis = tc.diff_in_millis()
@@ -182,7 +181,25 @@ def run_main():
     exit(0)
 
 
+def __set_config():
+    if config.verbose:
+        lvl = logging.DEBUG
+    else:
+        lvl = logging.INFO
+    logging.basicConfig(level=lvl, format='[%(levelname)-8s] (%(threadName)-10s) %(message)s', )
+
+
+def run_push_load():
+    __set_config()
+
+    credentials = run_prep(1)
+    p = test_push(credentials[0], 'test_runner/test1')
+    p.join()
+
+    exit(0)
+
+
 if __name__ == "__main__":
     # execute only if run as a script - this is always debug run
     config.set_verbose(True)
-    run_main()
+    run_pull_load()

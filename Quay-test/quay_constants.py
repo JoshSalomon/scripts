@@ -72,9 +72,11 @@ class Debug(object):
         self.push_debug_level(self.debug_level | DebugLevel.DEBUG_INFO)
 
 
-class AppException(Exception):
-    def __init__(self, msg):
+class HttpAppException(Exception):
+    def __init__(self, msg, status_code, orig_txt=""):
         self.__msg__ = msg
+        self.__status_code__ = status_code
+        self.__orig_txt__ = orig_txt
         pass
 
 #
@@ -124,3 +126,6 @@ DEF_NUM_THREADS = 3
 DEF_CYCLES = 1
 DEF_VERBOSE = False
 DEF_USE_HTTPS = False
+DEF_RUN_PUSH_SIZE_GB = 0
+DEF_UPLOAD_IMAGES = 1
+

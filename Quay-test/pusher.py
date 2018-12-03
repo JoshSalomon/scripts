@@ -11,6 +11,16 @@ from base_thread import LoadTestThread
 import json
 from Cryptodome.PublicKey import RSA
 from jwkest.jwk import RSAKey
+from quay_constants import HttpAppException
+
+#import Crypto.PublicKey.RSA
+#from Cryptodome.PublicKey import RSA
+
+#import jwkest.jwk
+#import Crypto.PublicKey.RSA as RSA
+
+#from Cryptodome.PublicKey import RSA
+#from Cryptodome.PublicKey.RSA import RSAKey
 
 #
 # local imports
@@ -44,7 +54,13 @@ class Pusher(LoadTestThread):
 
     def run(self, wait_multiply=0):
         # todo - login and keep token in
-        self.push()
+        total_size = 0
+        nimages = c.num_upload_images
+        for i in range(nimages):
+            size = self.push()
+            total_size += size
+            total_mb = int(total_size / MB_IN_BYTES)
+            logging.info('Uploaded image #{}/{}: size {:,} bytes, total {:,} MBs'.format(i+1, nimages, size, total_mb))
         return
         time_in_secs = 1
         while not self.__stop_event__.is_set():
@@ -63,7 +79,27 @@ class Pusher(LoadTestThread):
         # assumption - we already logged in and the credentials are already set
         # currently ignoring n_images!
         dckr_image = self.build_single_image_manifest(tag_name, min_size, max_size)
-        self.d_api.push_single_image(self.__repo_name__, dckr_image, header)
+        retry = True
+        while retry:
+            debug_i = 0
+            try:
+                logging.debug(f' Trying to push tag {tag_name}')
+                if debug_i == 0:
+                    raise HttpAppException("Debug", 401, '{"error": "Signature has expired"}')
+                self.d_api.push_single_image(self.__repo_name__, dckr_image, header)
+                retry = False
+            except HttpAppException as ae:
+                debug_i += 1
+                if ae.__status_code__ == 401:
+                    orig_msg = ""
+                    json_msg = self.d_api.json_decoder.decode(ae.__orig_txt__)
+                    if json_msg['error'] is not None and json_msg['error'] != "":
+                        orig_msg = json_msg['error']
+                    if orig_msg == "Signature has expired":  # need to re-login
+                        logging.debug(f' Expired token, doing re-login and retry')
+                        self.d_api.login()
+                        retry = True
+        return dckr_image.size
 
     def build_single_image_manifest(self, tag_name, min_size, max_size):
         image = quay_utils.create_random_image(min_size, max_size, tag_name[len(self.__tag_prefix__):])

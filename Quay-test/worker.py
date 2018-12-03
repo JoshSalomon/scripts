@@ -2,7 +2,7 @@
 import threading
 import logging
 
-from quay_constants import AppException
+from quay_constants import HttpAppException
 from docker_v2_apis import DockerV2Apis
 from base_thread import LoadTestThread
 
@@ -53,7 +53,7 @@ class Worker(LoadTestThread):
                 i += 1
                 self.bandwidth, self.total_capacity = docker_apis.pull_all_images(repo_name)
 
-        except AppException as ae:
+        except HttpAppException as ae:
             logging.error(" Exception: <%s>" % ae.__str__())
             logging.error(" Exception: <%s>" % ae.__msg__)
             logging.error(" == Cause: <%s>" % ae.__cause__)

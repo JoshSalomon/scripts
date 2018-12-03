@@ -38,7 +38,7 @@ class DockerV2Apis(AbstractAPIs):
         r = self.get(url, params=params, auth=auth, timeout=30)
 
         if r.status_code / 100 != 2:
-            raise const.AppException(f" Login failed, rc={r.status_code}")
+            raise const.HttpAppException(f" Login failed, rc={r.status_code}", r.status_code, r.text)
 
         if r is not None and r.headers['Content-Type'] == 'application/json':
             decoded_request = self.json_decoder.decode(r.text)
@@ -181,7 +181,8 @@ class DockerV2Apis(AbstractAPIs):
                 logging.error(f'Failed loading the image bytes, chunk #{i}, size{dckr_image.size}: rc={r.status_code}')
                 logging.error(r.headers)
                 logging.error(r.content)
-                raise const.AppException(f'Failed loading image bytes, (chunk {i}) rc={r.status_code}')
+                raise const.HttpAppException(f'Failed loading image bytes, (chunk {i}) rc={r.status_code}',
+                                             r.status_code, r.text)
             start_byte = start_byte + CHUNK_SIZE
         return
 
@@ -197,7 +198,7 @@ class DockerV2Apis(AbstractAPIs):
             logging.error(f'**Failed to start upload rc={r.status_code}')
             logging.error(r.headers)
             logging.error(r.content)
-            raise const.AppException(f'Failed starting upload, rc={r.status_code}')
+            raise const.HttpAppException(f'Failed starting upload, rc={r.status_code}', r.status_code, r.text)
         upload_uuid = r.headers['Docker-Upload-UUID']
         new_upload_location = r.headers['Location']
         logging.debug(f'Starting upload {upload_uuid} to {new_upload_location}')
@@ -219,7 +220,7 @@ class DockerV2Apis(AbstractAPIs):
             logging.error(f'Failed adding the digest, rc={r.status_code}')
             logging.error(r.headers)
             logging.error(r.content)
-            raise const.AppException(f'Failed adding the digest, rc={r.status_code}')
+            raise const.HttpAppException(f'Failed adding the digest, rc={r.status_code}', r.status_code, r.text)
 
         assert r.headers['Docker-Content-Digest'] == dckr_image.checksum
         # todo - add here head command for checking the upload.
@@ -235,7 +236,7 @@ class DockerV2Apis(AbstractAPIs):
             logging.error(f'Failed adding the manifest, rc={r.status_code}')
             logging.error(r.headers)
             logging.error(r.content)
-            raise const.AppException(f'Failed adding the manifest, rc={r.status_code}')
+            raise const.HttpAppException(f'Failed adding the manifest, rc={r.status_code}', r.status_code, r.text)
 
     #todo make min download size configurable from command line.
     def pull_all_images(self, repo_name, min_download_size=50 * 1024):

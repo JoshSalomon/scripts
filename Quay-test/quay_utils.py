@@ -393,9 +393,6 @@ class DockerSchema1Manifest(ManifestInterface):
             raise MalformedSchema1Manifest('malformed manifest data: %s' % ve)
 
         try:
-#            validate_schema(self._parsed, DockerSchema1Manifest.METASCHEMA)
-            print(' type of manifest bytes is %s' % type(manifest_bytes))
-            print(' type of parsed is %s' % type(self._parsed))
             validate_schema(self._parsed, DockerSchema1Manifest.METASCHEMA)
         except ValidationError as ve:
             raise MalformedSchema1Manifest('manifest data does not match schema: %s' % ve)

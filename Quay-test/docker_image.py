@@ -7,6 +7,11 @@ class DockerImage(object):
         self.__layer_dict__ = layer_dict
         self.__tag__ = tag
 
+    def __del__(self):
+        del self.__image_bytes__
+        del self.__layer_dict__
+        del self.__manifest__
+
     @property
     def manifest(self):
         return self.__manifest__

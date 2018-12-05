@@ -3,24 +3,13 @@
 #
 import threading
 import logging
-import os
 import random
-import time
 import hashlib
 from base_thread import LoadTestThread
 import json
 from Cryptodome.PublicKey import RSA
 from jwkest.jwk import RSAKey
-from quay_constants import HttpAppException
-
-#import Crypto.PublicKey.RSA
-#from Cryptodome.PublicKey import RSA
-
-#import jwkest.jwk
-#import Crypto.PublicKey.RSA as RSA
-
-#from Cryptodome.PublicKey import RSA
-#from Cryptodome.PublicKey.RSA import RSAKey
+from quay_constants import HttpAppException, AppRetryException, TEST_USERNAME
 
 #
 # local imports
@@ -43,25 +32,29 @@ c = config.Config()
 
 
 class Pusher(LoadTestThread):
-    def __init__(self, name, credentials, repo_name, tag_prefix='Tag'):
+    def __init__(self, name, credentials, repo_name, n_images, tag_prefix='Tag'):
         super().__init__(name, credentials)
         self.__repo_name__ = repo_name
         self.__tag_prefix__ = tag_prefix
         self.__stop_event__ = threading.Event()
 #        self.jwk = RSAKey(key=RSA.generate(2048).publickey()).serialize(True)
         self.jwk = RSAKey(key=RSA.generate(2048)).serialize(True)
-        #self.jwk.get()
+        self.__total_mbs__ = 0
+        self.__total_images__ = 0
+        self.__n_images = int(n_images)
 
     def run(self, wait_multiply=0):
         # todo - login and keep token in
         total_size = 0
-        nimages = c.num_upload_images
-        for i in range(nimages):
+        for i in range(self.__n_images):
             size = self.push()
             total_size += size
-            total_mb = int(total_size / MB_IN_BYTES)
-            logging.info('Uploaded image #{}/{}: size {:,} bytes, total {:,} MBs'.format(i+1, nimages, size, total_mb))
+            self.__total_mbs__ = int(total_size / MB_IN_BYTES)
+            self.__total_images__ += 1
+            logging.info('Uploaded image #{}/{}: size {:,} bytes, total {:,} MBs'
+                         .format(i + 1, self.__n_images, size, self.__total_mbs__))
         return
+        # todo: current code is for push only - need to modify for pull/push
         time_in_secs = 1
         while not self.__stop_event__.is_set():
             # time_in_secs = push....
@@ -72,6 +65,7 @@ class Pusher(LoadTestThread):
         options = ProtocolOptions()
         tag_rand = random.randint(1024, 1024*1024*16)
         tag_name = '%s%06x' % (self.__tag_prefix__,  tag_rand)
+        size = 0
         header = {
             'Accept': options.accept_mimetypes,
         }
@@ -81,25 +75,18 @@ class Pusher(LoadTestThread):
         dckr_image = self.build_single_image_manifest(tag_name, min_size, max_size)
         retry = True
         while retry:
-            debug_i = 0
             try:
                 logging.debug(f' Trying to push tag {tag_name}')
-                if debug_i == 0:
-                    raise HttpAppException("Debug", 401, '{"error": "Signature has expired"}')
                 self.d_api.push_single_image(self.__repo_name__, dckr_image, header)
+                size = dckr_image.size
+                dckr_image = None
                 retry = False
-            except HttpAppException as ae:
-                debug_i += 1
-                if ae.__status_code__ == 401:
-                    orig_msg = ""
-                    json_msg = self.d_api.json_decoder.decode(ae.__orig_txt__)
-                    if json_msg['error'] is not None and json_msg['error'] != "":
-                        orig_msg = json_msg['error']
-                    if orig_msg == "Signature has expired":  # need to re-login
-                        logging.debug(f' Expired token, doing re-login and retry')
-                        self.d_api.login()
-                        retry = True
-        return dckr_image.size
+            except AppRetryException:
+                logging.debug(f' Expired token, doing re-login and retry')
+                scopes = [f'repository:{TEST_USERNAME}/test1:*']
+                self.d_api.login(scopes=scopes)
+                retry = True
+        return size
 
     def build_single_image_manifest(self, tag_name, min_size, max_size):
         image = quay_utils.create_random_image(min_size, max_size, tag_name[len(self.__tag_prefix__):])
@@ -111,7 +98,16 @@ class Pusher(LoadTestThread):
         manifest = builder.build(self.jwk)
         # checksums = {image.id: checksum}
         dckr_image = docker_image.DockerImage(manifest, checksum, image['contents'], layer_dict, tag_name)
+        image['contents'] = None
         return dckr_image
+
+    @property
+    def total_images(self):
+        return self.__total_images__
+
+    @property
+    def total_mbs(self):
+        return self.__total_mbs__
 
 
 class ProtocolOptions(object):

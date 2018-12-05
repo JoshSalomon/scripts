@@ -6,6 +6,7 @@ import timer_class
 import random_iter
 import logging
 import requests
+import time
 
 import config
 import docker_image
@@ -35,7 +36,22 @@ class DockerV2Apis(AbstractAPIs):
         self.session = requests.Session()
         logging.debug(self.session)
         url = c.docker_api_url(self.ip_address) + const.D_API_AUTH
-        r = self.get(url, params=params, auth=auth, timeout=30)
+        # todo - put try/except around this and handle rc 500 some way.
+
+        max_retries = 5
+        for i in range(max_retries):
+            try:
+                r = self.get(url, params=params, auth=auth, timeout=30)
+                break   # if no exception was raised, continue.
+            except const.AppRetryException as ar:
+                if i < (max_retries - 1):
+                    logging.info(f"Login failed, rc={ar.__status_code__} - waiting and retrying")
+                    time.sleep(1)
+                    continue
+                else:
+                    logging.error(f"Failed {max_retries} login attempts, quitting")
+                    raise ar
+
 
         if r.status_code / 100 != 2:
             raise const.HttpAppException(f" Login failed, rc={r.status_code}", r.status_code, r.text)
@@ -94,16 +110,23 @@ class DockerV2Apis(AbstractAPIs):
 
     def get_image_size(self, repo_name, image_id, b_decompress=False):
         size = 0
-        url = ""
-        try:
-            url = c.docker_api_url(self.ip_address) + repo_name + '/blobs/' + image_id
-            r = self.head(url, timeout=30)
-            logging.debug(r.headers)
-            if r.status_code / 100 == 2:
-                size = int(r.headers['Content-Length'])
-        except Exception as e:
-            logging.error('Error issuing HEAD request ' + url)
-            logging.error(' ==> %s' % e.args)
+        url = c.docker_api_url(self.ip_address) + repo_name + '/blobs/' + image_id
+        retry = True
+        while retry:
+            try:
+                r = self.head(url, timeout=30)
+                retry = False
+                logging.debug(r.headers)
+                if r.status_code / 100 == 2:
+                    size = int(r.headers['Content-Length'])
+            except const.AppRetryException:
+                logging.debug(f' Expired token, doing re-login and retry')
+                scopes = [f'repository:{const.TEST_USERNAME}/test1:*']
+                self.login(scopes=scopes)
+                retry = True
+            except Exception as e:
+                logging.error('Error issuing HEAD request ' + url)
+                logging.error(' ==> %s' % e.args)
         return size
 
     def download_image(self, repo_name, image_id, b_decompress=False):
@@ -115,12 +138,11 @@ class DockerV2Apis(AbstractAPIs):
             if r.headers['Content-Encoding'] == 'gzip':
                 bio = BytesIO(r.content)
                 size = bio.seek(0, SEEK_END)
-                logging.debug('compressed size = %d' % int(size))
+                logging.debug('Compressed size = %d' % int(size))
                 if b_decompress:
                     bio.seek(0)
                     data = gzip.decompress(bio.read())
                     if const.Debug.print_processed_response:
-                        logging.debug(" decoding gzip response")
                         logging.debug("Decompressed size = %d" % len(data))
                         logging.debug(data[:64])
         except Exception:
@@ -131,17 +153,27 @@ class DockerV2Apis(AbstractAPIs):
 
     def get_tags_in_repo(self, repo_name):
         url = c.docker_api_url(self.ip_address) + repo_name + '/tags/list'
-        r = self.get(url, timeout=30)
-        success = r.status_code / 100 == 2
-        tags = []
-        if success:
-            decoded_request = self.json_decoder.decode(r.text)
-            if len(decoded_request['tags']) > 0:
-                for tag in decoded_request['tags']:
-                    tags.append(tag)
-            if const.DEBUG.print_processed_response:
-                logging.debug('Tags for repo %s:' % repo_name)
-                logging.debug('  %s' % tags)
+        retry = True
+        while retry:
+            try:
+                r = self.get(url, timeout=30)
+                retry = False
+                success = r.status_code / 100 == 2
+                tags = []
+                if success:
+                    decoded_request = self.json_decoder.decode(r.text)
+                    if len(decoded_request['tags']) > 0:
+                        for tag in decoded_request['tags']:
+                            tags.append(tag)
+                    if const.DEBUG.print_processed_response:
+                        logging.debug('Tags for repo %s:' % repo_name)
+                        logging.debug('  %s' % tags)
+            except const.AppRetryException:
+                logging.debug(f' Expired token, doing re-login and retry')
+                scopes = [f'repository:{const.TEST_USERNAME}/test1:*']
+                self.login(scopes=scopes)
+                retry = True
+
         return success, tags
 
     def get_manifest_by_tag(self, repo_name, tag):
@@ -264,18 +296,28 @@ class DockerV2Apis(AbstractAPIs):
                     next_digest_idx = digest_iter.next()
                     #for digest in digests:
                     while next_digest_idx is not None:
-                        digest = digests[next_digest_idx]
-                        size = self.get_image_size(repo_name, digest)
-                        logging.debug(' image size=%d' % int(size))
-                        if size > min_download_size:
-                            start_download = timer_class.TimerAPI()
-                            start_download.start()
-                            logging.info(" Going to download image, size=%d" % size)
-                            _, size = self.download_image(repo_name, digest)
-                            dl_time_millis = start_download.diff_in_millis()
-                            tc.add_stat(dl_time_millis, size)
-                            i += 1
-                        next_digest_idx = digest_iter.next()
+                        retry = True
+                        while retry:
+                            try:
+                                digest = digests[next_digest_idx]
+                                size = self.get_image_size(repo_name, digest)
+                                logging.debug(' image size=%d' % int(size))
+                                if size > min_download_size:
+                                    start_download = timer_class.TimerAPI()
+                                    start_download.start()
+                                    logging.info(" Going to download image, size=%d" % size)
+                                    _, size = self.download_image(repo_name, digest)
+                                    dl_time_millis = start_download.diff_in_millis()
+                                    tc.add_stat(dl_time_millis, size)
+                                    i += 1
+                                next_digest_idx = digest_iter.next()
+                                retry = False
+                            except const.AppRetryException:
+                                logging.debug(f' Expired token, doing re-login and retry')
+                                scopes = [f'repository:{const.TEST_USERNAME}/test1:*']
+                                self.login(scopes=scopes)
+                                retry = True
+
                     next_tag_idx = tag_iter.next()
         const.DEBUG.pop_debug_level()
         tc.print_stats()

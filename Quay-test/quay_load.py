@@ -127,6 +127,7 @@ def parse_opts(cmd):
                     usage_push()
                 else:
                     assert False
+                exit(0)
             #
             # PULL only options
             #

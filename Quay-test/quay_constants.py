@@ -79,6 +79,12 @@ class HttpAppException(Exception):
         self.__orig_txt__ = orig_txt
         pass
 
+
+class AppRetryException(HttpAppException):
+    def __init__(self, rc=401, msg="Token expired"):
+        super().__init__(msg, rc)
+
+
 #
 # If keeping this True - look in the code for some file locations in the code that relate
 # to my local home directory (/home/jsalomon)
@@ -87,7 +93,7 @@ DEBUG = Debug()  # Control amount of output
 
 #  QUAY_DOMAIN = 'quay.io'
 #  QUAY_URL = 'https://' + QUAY_DOMAIN
-#QUAY_DOMAINS = ['andromeda03.sales.lab.tlv.redhat.com']
+# QUAY_DOMAINS = ['andromeda03.sales.lab.tlv.redhat.com']
 QUAY_DOMAINS = ['10.12.76.154', '10.12.76.167', '10.12.76.119']
 QUAY_PORT = None
 ####QUAY_URL = 'http://' + QUAY_DOMAIN + '/'

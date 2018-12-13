@@ -160,15 +160,17 @@ def run_pull_load():
         bw, cap = t.get_bandwidth()
         total_bw += bw
         total_cap += cap
-        total_bw += bw
+
     if time_in_millis > 0:
         lower_bound_bw = (total_cap / 1024) / (time_in_millis / 1000)
         logging.info("Done, total bandwidth = %d KB/s (%d MB/s)" % (total_bw, int(total_bw / 1024)))
         if int(lower_bound_bw) < 20480:
-            logging.info("Total time: %d ms, lower bound bandwidth = %d KB/s" % (time_in_millis, int(lower_bound_bw)))
+            logging.info("Total time: {} ms, total capacity: {:,} MB lower bound bandwidth = {} KB/s"
+                         .format(time_in_millis, int(total_cap/1024/1024), int(lower_bound_bw)))
         else:
             lower_bound_bw /= 1024
-            logging.info("Total time: %d ms, lower bound bandwidth = %d MB/s" % (time_in_millis, int(lower_bound_bw)))
+            logging.info("Total time: {} ms, total capacity: {:,} MB lower bound bandwidth = {} MB/s"
+                         .format(time_in_millis, int(total_cap/1024/1024), int(lower_bound_bw)))
     exit(0)
 
 
@@ -177,7 +179,7 @@ def __set_config():
         lvl = logging.DEBUG
     else:
         lvl = logging.INFO
-    logging.basicConfig(level=lvl, format='[%(levelname)-8s] (%(threadName)-10s) %(message)s', )
+    logging.basicConfig(level=lvl, format='[%(levelname)-8s] (%(threadName)-10s) %(message)s')
 
 
 def run_push_load():
@@ -190,7 +192,7 @@ def run_push_load():
         images_per_thread = config.num_upload_images / len(credentials)
         for i in range(len(credentials)):
             # todo - change repo name to parameter!
-            t = pusher.Pusher('Push_t-%d' % i, credentials[i],'test_runner/test1',
+            t = pusher.Pusher('Push_t-%d' % i, credentials[i], 'test_runner/test1',
                               images_per_thread, f'Tag-{i}-')
             threads.append(t)
         start_all_threads(threads)
@@ -204,6 +206,8 @@ def run_push_load():
 
     total_images = 0
     total_size_mb = 0
+    time_seconds = 0
+    min_bw_mb_s = 0
     for pt in threads:
         assert isinstance(pt, pusher.Pusher)
         total_images += pt.total_images
@@ -211,18 +215,12 @@ def run_push_load():
 
     if time_in_millis > 0:
         time_seconds = time_in_millis / 1000
-        min_bw_mb_s = total_size_mb / (time_seconds)
+        min_bw_mb_s = total_size_mb / time_seconds
 
     logging.info(" Summary:")
     logging.info(f" Wrote {total_images} images, total size is {total_size_mb} MBs")
     logging.info(" Gross time is %d seconds, minimal bandwidth is %.02f MB/S" % (int(time_seconds), min_bw_mb_s))
     exit(0)
-
-
-def test_push_obsolete(credentials, repo_name):
-    p = pusher.Pusher("thread-name", credentials, repo_name)
-    p.start()
-    return p
 
 
 if __name__ == "__main__":

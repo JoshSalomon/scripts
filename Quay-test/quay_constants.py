@@ -15,8 +15,9 @@ class DebugLevel(Flag):
 
 
 class Debug(object):
-    debug_level = DebugLevel.REQUEST | DebugLevel.STATUS_CODE | DebugLevel.DECODED_RESPONSE | DebugLevel.HEADERS
-    #DebugLevel.RESPONSE | DebugLevel.PROCESSED_RESPONSE
+    debug_level = DebugLevel.REQUEST | DebugLevel.STATUS_CODE | DebugLevel.DECODED_RESPONSE | DebugLevel.HEADERS | \
+                  DebugLevel.PROCESSED_RESPONSE
+    # DebugLevel.RESPONSE | DebugLevel.PROCESSED_RESPONSE
     dl_stack = []
 
     @property
@@ -56,7 +57,7 @@ class Debug(object):
 
     @property
     def get_debug_level(self):
-        return self.debug_level;
+        return self.debug_level
 
     def push_debug_level(self, new_level):
         self.dl_stack.insert(0, self.get_debug_level)
@@ -74,6 +75,10 @@ class Debug(object):
 
 class HttpAppException(Exception):
     def __init__(self, msg, status_code, orig_txt=""):
+        """
+
+        :rtype: object
+        """
         self.__msg__ = msg
         self.__status_code__ = status_code
         self.__orig_txt__ = orig_txt
@@ -81,8 +86,13 @@ class HttpAppException(Exception):
 
 
 class AppRetryException(HttpAppException):
-    def __init__(self, rc=401, msg="Token expired"):
+    def __init__(self, rc=401, msg="Token expired", relogin=True):
         super().__init__(msg, rc)
+        self.__relogin = relogin
+
+    @property
+    def do_relogin(self):
+        return self.__relogin
 
 
 #
@@ -95,26 +105,27 @@ DEBUG = Debug()  # Control amount of output
 #  QUAY_URL = 'https://' + QUAY_DOMAIN
 # QUAY_DOMAINS = ['andromeda03.sales.lab.tlv.redhat.com']
 QUAY_DOMAINS = ['10.12.76.154', '10.12.76.167', '10.12.76.119']
+##QUAY_DOMAINS = ['10.12.76.119']
 QUAY_PORT = None
-####QUAY_URL = 'http://' + QUAY_DOMAIN + '/'
-#MAGE_ID_LAST = '3690474eb5b4b26fdfbd89c6e159e8cc376ca76ef48032a30fa6aafd56337880'
-#IMAGE_ID_TOP = '03cffc43c0a5cf4268bbf830cf917e5d089f74e03609d1b3c79522e6043d769e'
-#NAMESPACE = 'biocontainers'
-#REPOSITORY = 'coreutils'
+# ### QUAY_URL = 'http://' + QUAY_DOMAIN + '/'
+# IMAGE_ID_LAST = '3690474eb5b4b26fdfbd89c6e159e8cc376ca76ef48032a30fa6aafd56337880'
+# IMAGE_ID_TOP = '03cffc43c0a5cf4268bbf830cf917e5d089f74e03609d1b3c79522e6043d769e'
+# NAMESPACE = 'biocontainers'
+# REPOSITORY = 'coreutils'
 
 #
 # List of Quay V1 APIs
 #
-####QUAY_API_URL = QUAY_URL + 'api/v1/'
-####QUAY_API_TOKEN = 'tBmnKXZ39wlwMchGR6DOqv4LjNBJkazFqsH3uHEz'
+# ###QUAY_API_URL = QUAY_URL + 'api/v1/'
+# ###QUAY_API_TOKEN = 'tBmnKXZ39wlwMchGR6DOqv4LjNBJkazFqsH3uHEz'
 #
-###Q_API_REPOSITORY = 'repository'
+# ##Q_API_REPOSITORY = 'repository'
 
 #
 # List of docker V2 APIs (as described in docker documentation) - These APIs
 # are implemented by Quay, but quay does not control its definifion.
 #
-####DOCKER_API_URL_OLD = QUAY_URL + 'v2/'
+# ###DOCKER_API_URL_OLD = QUAY_URL + 'v2/'
 
 #
 D_API_AUTH = 'auth'
@@ -123,7 +134,7 @@ D_API_CATALOG = '_catalog'
 TEST_USERNAME = 'test_runner'
 TEST_PWD = 'redhat12'
 
-####REP_NAME1 = 'test_runner/test1'
+# ###REP_NAME1 = 'test_runner/test1'
 
 ####
 # Default Values
@@ -134,4 +145,3 @@ DEF_VERBOSE = False
 DEF_USE_HTTPS = False
 DEF_RUN_PUSH_SIZE_GB = 0
 DEF_UPLOAD_IMAGES = 1
-

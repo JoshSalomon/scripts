@@ -7,6 +7,7 @@ import config
 import logging
 from main import run_pull_load, run_push_load
 
+# todo - add chunk size fof push
 config = config.Config()
 
 
@@ -21,6 +22,7 @@ def usage_pull():
     print('                       Default %d' % config.threads)
     print('-c, --cycles           Number of cycles over the entire registry each thread performs')
     print('                       Default %d' % config.cycles)
+    print('-s, --seconds <num>    Time to run the test in seconds. The test completes when the time is reached')
     print('--quay-ip <ipaddress>  IP address of the Quay server')
     print('                       Default %s' % config.quay_ip)
     print('--quay-port <num>      The port on which Quay server listens')
@@ -29,6 +31,8 @@ def usage_pull():
     print('                       Default %s' % config.verbose)
     print('-v, --verbose          Print more info to the console')
     print('                       Default is %s' % config.verbose)
+    print('--verbose-on-error     Start printing more info after encountering errors')
+    print('                       Default id %s' % config.verbose_on_error)
     print('--username <string>    The username for logging into Quay')
     print('                       Default is %s' % config.username)
     print('--password <string>    Password for the login')
@@ -45,10 +49,12 @@ def usage_push():
     print('Options:')
     print('-t, --threads          Number of concurrent threads in this test')
     print('                       Default %d' % config.threads)
-    print('--push-size-gb <num>   the total size of images to upload')
+    print('--push-size-gb <num>   The total size of images to upload')
     print('                       Default is %.01f GB' % config.push_size_gb)
-    print('--images <num>         number of images to upload (used only if no size-gb is given)')
+    print('--images <num>         Number of images to upload (used only if no size-gb is given)')
     print('                       Default is %d' % config.num_upload_images)
+    print('--wait <num>           Time to wait between pull ops in seconds')
+    print('                       Default is 0 (no wait)')
     print('--quay-ip <ipaddress>  IP address of the Quay server')
     print('                       Default %s' % config.quay_ip)
     print('--quay-port <num>      The port on which Quay server listens')
@@ -57,6 +63,8 @@ def usage_push():
     print('                       Default %s' % config.verbose)
     print('-v, --verbose          Print more info to the console')
     print('                       Default is %s' % config.verbose)
+    print('--verbose-on-error     Start printing more info after encountering errors')
+    print('                       Default id %s' % config.verbose_on_error)
     print('--username <string>    The username for logging into Quay')
     print('                       Default is %s' % config.username)
     print('--password <string>    Password for the login')
@@ -83,6 +91,7 @@ long_opts = ["threads=",
              "username=",
              "password=",
              "print-config",
+             "verbose-on-error",
              "help"]
 
 
@@ -93,8 +102,10 @@ def parse_opts(cmd):
     global short_opts
     global long_opts
     if cmd == Command.PULL:
-        short_opts = short_opts + "c:"
+        short_opts = short_opts + "c:s:"
         long_opts.append("cycles=")
+        long_opts.append("seconds=")
+        long_opts.append("wait=")
     elif cmd == Command.PUSH:
         long_opts.append("push-size-gb=")
         long_opts.append("images=")
@@ -113,6 +124,8 @@ def parse_opts(cmd):
                 config.enable_https()
             elif opt in ("-v", "--verbose"):
                 config.set_verbose(True)
+            elif opt == "--verbose-on-error":
+                config.set_verbose_on_error(True)
             elif opt == "--username":
                 config.set_username(arg)
             elif opt == "--password":
@@ -133,14 +146,19 @@ def parse_opts(cmd):
             #
             elif opt in ("-c", "--cycles"):
                 config.set_cycles(int(arg))
+            elif opt in ("-s", "--seconds"):
+                config.set_seconds_to_end(int(arg))
+            elif opt == "--wait":
+                config.set_wait_netween_ops(int(arg))
             #
             # PUSH only options
             #
             elif opt == "--push-size-gb":
-                config.set_push_size_gb(arg)
+                config.set_push_size_gb(int(arg))
             elif opt == "--images":
-                config.set_num_upload_images(arg)
+                config.set_num_upload_images(int(arg))
             else:
+                logging.error(f" Illegal option {opt} for command {sys.argv[1]}")
                 assert False
 
     except getopt.GetoptError:

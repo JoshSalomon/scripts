@@ -2,7 +2,7 @@
 import threading
 import logging
 
-from quay_constants import HttpAppException
+from quay_constants import HttpAppException, AppRetryException
 from docker_v2_apis import DockerV2Apis
 from base_thread import LoadTestThread
 
@@ -26,7 +26,7 @@ class Worker(LoadTestThread):
         logging.debug('Start worker')
         docker_apis = self.d_api
         try:
-            session = docker_apis.login(None, None)
+            session = docker_apis.login()
 
             # quay_apis = QuayApis(session)
             #
@@ -51,7 +51,9 @@ class Worker(LoadTestThread):
                 # repo_name = repos[i]
                 logging.info('repo %d/%d: %s' % (i+1, n_repos, repo_name))
                 i += 1
-                self.bandwidth, self.total_capacity = docker_apis.pull_all_images(repo_name)
+                bw, tc = docker_apis.pull_all_images(repo_name)
+                self.bandwidth += bw
+                self.total_capacity += tc
 
         except HttpAppException as ae:
             logging.error(" Exception: <%s>" % ae.__str__())
@@ -59,6 +61,8 @@ class Worker(LoadTestThread):
             logging.error(" == Cause: <%s>" % ae.__cause__)
             logging.error(" == Context <%s>" % ae.__context__)
             exit(1)
+        except AppRetryException as are:
+            pass  # todo fix this
         except Exception as e:
             logging.error(" Exception: <%s>" % e.__str__())
             logging.error(" == Cause: <%s>" % e.__cause__)

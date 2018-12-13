@@ -8,5 +8,3 @@ class LoadTestThread(Thread):
         self.name = name
         self.ip_address = credentials[0]
         self.d_api = credentials[1]
-
-

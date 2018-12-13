@@ -9,14 +9,13 @@ from base_thread import LoadTestThread
 import json
 from Cryptodome.PublicKey import RSA
 from jwkest.jwk import RSAKey
-from quay_constants import HttpAppException, AppRetryException, TEST_USERNAME
+from quay_constants import AppRetryException, TEST_USERNAME
 
 #
 # local imports
 #
 import config
 import quay_utils
-import docker_v2_apis
 import docker_image
 
 KB_IN_BYTES = 1024
@@ -26,7 +25,7 @@ GB_IN_BYTES = 1024 * MB_IN_BYTES
 DEF_MINSIZE = 100 * KB_IN_BYTES
 # DEF_MAXSIZE = 2 * GB_IN_BYTES
 DEF_MAXSIZE = 80 * MB_IN_BYTES  # For debug use smaller sizes.
-CHUNK_SIZE = 2 * MB_IN_BYTES
+CHUNK_SIZE = 4 * MB_IN_BYTES
 
 c = config.Config()
 
@@ -37,7 +36,6 @@ class Pusher(LoadTestThread):
         self.__repo_name__ = repo_name
         self.__tag_prefix__ = tag_prefix
         self.__stop_event__ = threading.Event()
-#        self.jwk = RSAKey(key=RSA.generate(2048).publickey()).serialize(True)
         self.jwk = RSAKey(key=RSA.generate(2048)).serialize(True)
         self.__total_mbs__ = 0
         self.__total_images__ = 0
@@ -55,11 +53,11 @@ class Pusher(LoadTestThread):
                          .format(i + 1, self.__n_images, size, self.__total_mbs__))
         return
         # todo: current code is for push only - need to modify for pull/push
-        time_in_secs = 1
-        while not self.__stop_event__.is_set():
-            # time_in_secs = push....
-            self.__stop_event__.wait(wait_multiply * time_in_secs)
-        return
+#        time_in_secs = 1
+#        while not self.__stop_event__.is_set():
+#            # time_in_secs = push....
+#            self.__stop_event__.wait(wait_multiply * time_in_secs)
+#        return
 
     def push(self, n_images=1, min_size=DEF_MINSIZE, max_size=DEF_MAXSIZE):
         options = ProtocolOptions()
@@ -81,10 +79,11 @@ class Pusher(LoadTestThread):
                 size = dckr_image.size
                 dckr_image = None
                 retry = False
-            except AppRetryException:
-                logging.debug(f' Expired token, doing re-login and retry')
-                scopes = [f'repository:{TEST_USERNAME}/test1:*']
-                self.d_api.login(scopes=scopes)
+            except AppRetryException as are:
+                if are.do_relogin:
+                    logging.debug(f' Expired token, doing re-login and retry')
+                    scopes = [f'repository:{TEST_USERNAME}/test1:*']
+                    self.d_api.login(scopes=scopes)
                 retry = True
         return size
 

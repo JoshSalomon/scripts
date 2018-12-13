@@ -3,7 +3,10 @@ import quay_constants as const
 import logging
 import requests
 import time
+import config
+import sys
 
+c = config.Config()
 
 def debug_counter():
     return 1
@@ -29,13 +32,17 @@ class AbstractAPIs(object):
                 msg = js['error']
             else:
                 msg = ""
-            logging.info(f"Authentication error - retrying msg='{msg}'")
+            logging.info(f"Authentication error on request {r.request.method} {r.request.url}")
+            logging.info(f" -> retrying msg='{msg}'")
+            if c.verbose_on_error:
+                logging.getLogger().setLevel(logging.DEBUG)
+            time.sleep(1)
             raise const.AppRetryException(msg=msg)
         if r.status_code == 500:
             # internal server error
             logging.info("Internal server error - waiting one second and retrying")
             time.sleep(1)
-            raise const.AppRetryException(rc=500, msg="Internal server error")
+            raise const.AppRetryException(rc=500, msg="Internal server error", relogin=False)
         if debug_counter() % 45 == 0:
             raise const.AppRetryException()
         return
@@ -63,7 +70,7 @@ class AbstractAPIs(object):
             logging.error("Connection timeout - retrying")
             logging.error(" == Cause: <%s>" % et.__cause__)
             logging.error(" == Context <%s>" % et.__context__)
-            raise const.AppRetryException(-1, et.__context__)
+            raise const.AppRetryException(-1, et.__context__, relogin=False)
         except requests.exceptions.TooManyRedirects as etmr:
             logging.error("Too many redirects")
             logging.error(" == Cause: <%s>" % etmr.__cause__)
@@ -72,7 +79,7 @@ class AbstractAPIs(object):
             logging.error("Connection Error - retrying")
             logging.error(" == Cause: <%s>" % ece.__cause__)
             logging.error(" == Context <%s>" % ece.__context__)
-            raise const.AppRetryException(-1, ece.__context__)
+            raise const.AppRetryException(-1, ece.__context__, relogin=False)
         except requests.exceptions.HTTPError as ehttp:
             logging.error("HTTP Error")
             logging.error(" == Cause: <%s>" % ehttp.__cause__)

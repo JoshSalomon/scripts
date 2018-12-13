@@ -2,10 +2,15 @@ from enum import Enum, auto
 
 import quay_constants
 
+DIFF_INFINITE = int(1024 * 1024 * 1024)
+
+
 class Command(Enum):
     PUSH = auto()
     PULL = auto()
 
+
+# todo - add max tags to read. just to make some runs faster.
 #
 # This class is a singleton, this is implemented in the __new__ method
 #
@@ -20,7 +25,7 @@ class Config(object):
     def __init__(self):
         self.__threads = quay_constants.DEF_NUM_THREADS
         self.__cycles = quay_constants.DEF_CYCLES
-        self.__quay_ip = None ## quay_constants.QUAY_DOMAIN
+        self.__quay_ip = None  # quay_constants.QUAY_DOMAIN
         self.__quay_port = quay_constants.QUAY_PORT
         self.__use_https = quay_constants.DEF_USE_HTTPS
         self.__verbose = quay_constants.DEF_VERBOSE
@@ -29,6 +34,9 @@ class Config(object):
         self.__default_password = True
         self.__push_size_gb = quay_constants.DEF_RUN_PUSH_SIZE_GB
         self.__num_upload_images = quay_constants.DEF_UPLOAD_IMAGES
+        self.__millis_to_end = DIFF_INFINITE
+        self.__wait_between_ops = 0
+        self.__verbose_on_error = False
 
     @property
     def threads(self):
@@ -73,13 +81,6 @@ class Config(object):
         self.__use_https = True
 
     @property
-    def verbose(self):
-        return self.__verbose
-
-    def set_verbose(self, verbose):
-        self.__verbose = verbose
-
-    @property
     def username(self):
         return self.__username
 
@@ -117,6 +118,14 @@ class Config(object):
         return rc
 
     @property
+    def millis_to_end(self):
+        return self.__millis_to_end
+
+    def set_seconds_to_end(self, seconds):
+        self.__millis_to_end = int(seconds) * 1000
+        print(self.millis_to_end)
+
+    @property
     def num_upload_images(self):
         return self.__num_upload_images
 
@@ -132,6 +141,20 @@ class Config(object):
             rc += (":%d" % self.__quay_port)
         return rc
 
+    @property
+    def verbose_on_error(self):
+        return self.__verbose_on_error
+
+    def set_verbose_on_error(self, verbose):
+        self.__verbose_on_error = verbose
+
+    @property
+    def wait_between_ops(self):
+        return self.__wait_between_ops
+
+    def set_wait_netween_ops(self, wait_in_secs):
+        self.__wait_between_ops = wait_in_secs
+
     def print(self, command):
         print("Current test configuration:")
         print(f" => Quay server address: {self.quay_ip}")
@@ -144,6 +167,14 @@ class Config(object):
         print(f" => Number of threads: {self.threads}")
         if command == Command.PULL:
             print(f" => Number of repository iterations per thread: {self.cycles}")
+            if self.millis_to_end == DIFF_INFINITE:
+                print(" => Test will iterate over the entire repository")
+            else:
+                print(f" => Test will complete after {int(self.millis_to_end / 1000)} seconds")
+            if self.wait_between_ops <= 0:
+                print(f" => No wait between pull requests")
+            else:
+                print(f" => Test waits {self.wait_between_ops} seconds between pull requests")
         if command == Command.PUSH:
             if self.push_size_gb > 0:
                 print(f" => Push {self.push_size_gb} GBs of data into the repository")
@@ -151,3 +182,5 @@ class Config(object):
                 print(f" => Push {self.num_upload_images} images into the repository")
         verbose_mode = "On" if self.verbose else "Off"
         print(f" => Verbose: {verbose_mode}")
+        verbose_on_error_mode = "On" if self.verbose_on_error else "Off"
+        print(f" => Verbose on error: {verbose_on_error_mode}")

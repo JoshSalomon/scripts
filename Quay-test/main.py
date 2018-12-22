@@ -112,7 +112,8 @@ def run_prep(n_threads=0):
     for i in range(n_threads):
         scopes = [f'repository:{const.TEST_USERNAME}/test1:*']
         try:
-            ip = const.QUAY_DOMAINS[i % len(const.QUAY_DOMAINS)]
+            ## ip = const.QUAY_DOMAINS[i % len(const.QUAY_DOMAINS)]
+            ip = config.quay_ips[i % len(config.quay_ips)]
             d_api = docker_apis.DockerV2Apis(ip)
             session = d_api.login(scopes=scopes)
             logging.debug(f"Logging to {ip}, session=<{session}>, stat")

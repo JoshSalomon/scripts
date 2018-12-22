@@ -162,15 +162,17 @@ class DockerV2Apis(AbstractAPIs):
         url = c.docker_api_url(self.ip_address) + repo_name + '/tags/list'
         tags = []
         success = True
+        verbose_get = True
         while url is not None and url != "":
             retry = True
             success = True
             niter = 1
             while retry:
                 try:
-                    r = self.get(url, timeout=30)
+                    r = self.get(url, b_verbose=verbose_get, timeout=30)
                     niter += 1
                     retry = False
+                    verbose_get = False
                     success = r.status_code / 100 == 2
                     if success:
                         decoded_request = self.json_decoder.decode(r.text)
@@ -178,19 +180,32 @@ class DockerV2Apis(AbstractAPIs):
                             for tag in decoded_request['tags']:
                                 tags.append(tag)
                         if const.DEBUG.print_processed_response:
-                            logging.debug('Tags for repo %s (len %d):' % (repo_name, len(tags)))
+                            ltags = len(tags)
+                            if ltags % 2500 == 0:
+                                logging.info(f'Read {ltags:,} tags from repo {repo_name}')
+                            elif ltags % 500 == 0:
+                                logging.debug(f'Read {ltags:,} tags from repo {repo_name}')
                             # logging.debug('  %s' % tags)
                         try:
                             next_url = r.headers['Link']
                         except KeyError:
-                            next_url = ""
+                            next_url = None
+                        if c.max_tags > 0:
+                            if len(tags) >= c.max_tags:
+                                logging.debug(f' Got {len(tags)}, skipping reading tags')
+                                next_url = None
                         if next_url is not None and next_url != "":
                             assert len(next_url) > 13
                             assert next_url[:5] == '</v2/'
                             assert next_url[-13:] == '>; rel="next"'
                             url = c.docker_api_url(self.ip_address) + next_url[5:-13]
                         else:
-                            logging.debug(f'  {tags}')
+                            if len(tags) < 50:
+                                logging.debug(f'  {tags}')
+                            else:
+                                logging.debug(f'  {tags[:20]}')
+                                logging.debug(f' .... {len(tags)-40} tags skipped ...')
+                                logging.debug(f'  {tags[-20:]}')
                             url = None
                     else:
                         url = None
@@ -265,13 +280,6 @@ class DockerV2Apis(AbstractAPIs):
         # phase 2 starts here...
         self.patch_image_in_chunks(new_upload_location, dckr_image, header)
         # r = self.patch(new_upload_location, data=dckr_image.image_bytes, headers=header, timeout=3000)
-#        logging.debug(f'Upload of image completed, rc={r.status_code}')
-#        failure = int(r.status_code / 100) != 2
-#        if failure:
-#            logging.error(f'Failed loading the image bytes, rc={r.status_code}')
-#            logging.error(r.headers)
-#            logging.error(r.content)
-#            raise const.AppException(f'Failed loading image bytes, rc={r.status_code}')
 
         # Complete the process by the final message
         r = self.put(new_upload_location, params=dict(digest=dckr_image.checksum))
@@ -296,7 +304,6 @@ class DockerV2Apis(AbstractAPIs):
             logging.error(f'Failed adding the manifest, rc={r.status_code}')
             logging.error(r.headers)
             logging.error(r.content)
-            raise const.HttpAppException(f'Failed adding the manifest, rc={r.status_code}', r.status_code, r.text)
 
     # todo make min download size configurable from command line.
     def pull_all_images(self, repo_name, min_download_size=50 * 1024):
@@ -350,8 +357,8 @@ class DockerV2Apis(AbstractAPIs):
                                         dl_time_millis = start_download.diff_in_millis()
                                         tc.add_stat(dl_time_millis, size)
                                         i += 1
-                                        if c.wait_between_ops > 0:
-                                            time.sleep(c.wait_between_ops)
+                                        # if c.wait_between_ops > 0:
+                                        #     time.sleep(c.wait_between_ops)
                                     if tc.diff_in_millis() > c.millis_to_end:
                                         logging.info("Finish test after {:,} ms, threshold is {:,} ms".format
                                                      (tc.diff_in_millis(), c.millis_to_end))

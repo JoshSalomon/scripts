@@ -4,7 +4,7 @@ import logging
 import requests
 import time
 import config
-import sys
+# import sys
 
 c = config.Config()
 
@@ -47,19 +47,19 @@ class AbstractAPIs(object):
             raise const.AppRetryException()
         return
 
-    def get(self, url, **kwargs):
+    def get(self, url, b_verbose=True, **kwargs):
         self.set_token()
         r = None
-        if const.DEBUG.print_request:
+        if const.DEBUG.print_request and b_verbose:
             logging.debug('GET: %s' % url)
         try:
             r = self.session.get(url, **kwargs)
-            if const.DEBUG.print_status_code:
+            if const.DEBUG.print_status_code and b_verbose:
                 logging.debug("Status code = %d" % r.status_code)
             success = r.status_code / 100 == 2
-            if const.DEBUG.print_response or not success:
+            if (const.DEBUG.print_response and b_verbose) or not success:
                 logging.debug(r)
-            if const.DEBUG.print_headers or not success:
+            if (const.DEBUG.print_headers and b_verbose) or not success:
                 logging.debug(r.headers)
             self.check_token_expiry(r)
             if not success:

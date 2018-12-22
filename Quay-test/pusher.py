@@ -7,6 +7,7 @@ import random
 import hashlib
 from base_thread import LoadTestThread
 import json
+import time
 from Cryptodome.PublicKey import RSA
 from jwkest.jwk import RSAKey
 from quay_constants import AppRetryException, TEST_USERNAME
@@ -51,6 +52,8 @@ class Pusher(LoadTestThread):
             self.__total_images__ += 1
             logging.info('Uploaded image #{}/{}: size {:,} bytes, total {:,} MBs'
                          .format(i + 1, self.__n_images, size, self.__total_mbs__))
+            if c.wait_between_ops > 0:
+                time.sleep(c.wait_between_ops)
         return
         # todo: current code is for push only - need to modify for pull/push
 #        time_in_secs = 1

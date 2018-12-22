@@ -5,6 +5,7 @@ import sys
 import getopt
 import config
 import logging
+import ipaddress
 from main import run_pull_load, run_push_load
 
 # todo - add chunk size fof push
@@ -23,16 +24,18 @@ def usage_pull():
     print('-c, --cycles           Number of cycles over the entire registry each thread performs')
     print('                       Default %d' % config.cycles)
     print('-s, --seconds <num>    Time to run the test in seconds. The test completes when the time is reached')
-    print('--quay-ip <ipaddress>  IP address of the Quay server')
-    print('                       Default %s' % config.quay_ip)
+    print('--quay-ips <ip list>   List of IP addresses of the Quay server (comma separated)')
+    print('                       Default is <%s>' % config.quay_ips_as_str())
     print('--quay-port <num>      The port on which Quay server listens')
     print('                       Default is none')
     print('--use_https            Use HTTPS protocol to connect to quay instead of http')
     print('                       Default %s' % config.verbose)
+    print('--max-tags <num>       Limit the number of tags retrieved before the pull test (to  save time in debug)')
+    print('                       Default is %d (<=0 - read all the tags in the repository)' % config.max_tags)
     print('-v, --verbose          Print more info to the console')
     print('                       Default is %s' % config.verbose)
     print('--verbose-on-error     Start printing more info after encountering errors')
-    print('                       Default id %s' % config.verbose_on_error)
+    print('                       Default is %s' % config.verbose_on_error)
     print('--username <string>    The username for logging into Quay')
     print('                       Default is %s' % config.username)
     print('--password <string>    Password for the login')
@@ -42,7 +45,7 @@ def usage_pull():
 
 
 def usage_push():
-    print(f'Usage: {sys.argv[0]} pull [OPTIONS]')
+    print(f'Usage: {sys.argv[0]} push [OPTIONS]')
     print('   Fill up the Quay registry by uploading random images to the registry ')
     print('   This operation is limited by either number of images or the total size of images ')
     print('   uploaded to the registry')
@@ -55,8 +58,8 @@ def usage_push():
     print('                       Default is %d' % config.num_upload_images)
     print('--wait <num>           Time to wait between pull ops in seconds')
     print('                       Default is 0 (no wait)')
-    print('--quay-ip <ipaddress>  IP address of the Quay server')
-    print('                       Default %s' % config.quay_ip)
+    print('--quay-ips <ip list>   List of IP addresses of the Quay server (comma separated)')
+    print('                       Default is <%s>' % config.quay_ips_as_str())
     print('--quay-port <num>      The port on which Quay server listens')
     print('                       Default is none')
     print('--use_https            Use HTTPS protocol to connect to quay instead of http')
@@ -64,7 +67,7 @@ def usage_push():
     print('-v, --verbose          Print more info to the console')
     print('                       Default is %s' % config.verbose)
     print('--verbose-on-error     Start printing more info after encountering errors')
-    print('                       Default id %s' % config.verbose_on_error)
+    print('                       Default is %s' % config.verbose_on_error)
     print('--username <string>    The username for logging into Quay')
     print('                       Default is %s' % config.username)
     print('--password <string>    Password for the login')
@@ -84,7 +87,7 @@ def usage():
 short_opts = "t:vh"
 
 long_opts = ["threads=",
-             "quay-ip=",
+             "quay-ips=",
              "quay-port=",
              "use_https",
              "verbose",
@@ -92,6 +95,7 @@ long_opts = ["threads=",
              "password=",
              "print-config",
              "verbose-on-error",
+             "dont-run",
              "help"]
 
 
@@ -105,34 +109,49 @@ def parse_opts(cmd):
         short_opts = short_opts + "c:s:"
         long_opts.append("cycles=")
         long_opts.append("seconds=")
-        long_opts.append("wait=")
+        long_opts.append("max-tags=")
     elif cmd == Command.PUSH:
         long_opts.append("push-size-gb=")
         long_opts.append("images=")
+        long_opts.append("wait=")
     try:
         opts, args = getopt.getopt(sys.argv[2:], short_opts, long_opts)
         for opt, arg in opts:
             if opt in ("-t", "--threads"):
-                config.set_threads(int(arg))
+                config.threads = int(arg)
             elif opt in ("-c", "--cycles"):
-                config.set_cycles(int(arg))
-            elif opt == "--quay-ip":
-                config.set_quay_ip(arg)
+                config.cycles = int(arg)
+            elif opt == "--quay-ips":
+                ips = arg.split(",")
+                if len(ips) > 0:
+                    for i in range(len(ips)):
+                        ip_value_error = False
+                        try:
+                            ipaddress.ip_address(ips[i])
+                        except ValueError as ve:
+                            print(f'Error: {ve}')
+                            ip_value_error = True
+                    if ip_value_error:
+                        sys.exit(1)
+                    config.quay_ips = ips
+                    # logging.debug(f' *** set quay ips to {config.quay_ips_as_str()}')
             elif opt == "--quay-port":
-                config.set_quay_port(int(arg))
-            elif opt == "--use_https":
-                config.enable_https()
+                config.quay_port = int(arg)
+            elif opt == "--use-https":
+                config.use_https()
             elif opt in ("-v", "--verbose"):
-                config.set_verbose(True)
+                config.verbose = True
             elif opt == "--verbose-on-error":
-                config.set_verbose_on_error(True)
+                config.verbose_on_error = True
             elif opt == "--username":
-                config.set_username(arg)
+                config.username = arg
             elif opt == "--password":
-                config.set_password(arg)
+                config.password = arg
             elif opt == "--print-config":
                 global print_config
                 print_config = True
+            elif opt == "--dont-run":
+                config.dont_run = True
             elif opt in ("-h", "--help"):
                 if cmd == Command.PULL:
                     usage_pull()
@@ -145,18 +164,20 @@ def parse_opts(cmd):
             # PULL only options
             #
             elif opt in ("-c", "--cycles"):
-                config.set_cycles(int(arg))
+                config.cycles = int(arg)
             elif opt in ("-s", "--seconds"):
-                config.set_seconds_to_end(int(arg))
-            elif opt == "--wait":
-                config.set_wait_netween_ops(int(arg))
+                config.seconds_to_end = int(arg)
+            elif opt == "--max-tags":
+                config.max_tags = int(arg)
             #
             # PUSH only options
             #
             elif opt == "--push-size-gb":
-                config.set_push_size_gb(int(arg))
+                config.push_size_gb = int(arg)
             elif opt == "--images":
-                config.set_num_upload_images(int(arg))
+                config.num_upload_images = int(arg)
+            elif opt == "--wait":
+                config.wait_between_ops = int(arg)
             else:
                 logging.error(f" Illegal option {opt} for command {sys.argv[1]}")
                 assert False
@@ -164,7 +185,12 @@ def parse_opts(cmd):
     except getopt.GetoptError:
         logging.basicConfig(level=logging.INFO, format='[%(levelname)-8s] %(message)s', )
         logging.error("Error parsing command line arguments, exiting")
-        usage()
+        if command == Command.PUSH:
+            usage_push()
+        elif command == Command.PULL:
+            usage_pull()
+        else:
+            usage()
         sys.exit(2)
 
 
@@ -198,6 +224,9 @@ if print_config:
     config.print(command)
 else:
     print(f'Running program with {config.threads} threads')
+
+if config.dont_run:
+    sys.exit(0)
 
 if command == Command.PULL:
     run_pull_load()

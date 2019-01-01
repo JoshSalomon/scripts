@@ -164,7 +164,6 @@ class Config(object):
     @seconds_to_end.setter
     def seconds_to_end(self, seconds):
         self.__millis_to_end = int(seconds) * 1000
-        print(self.millis_to_end)
 
     @property
     def num_upload_images(self):

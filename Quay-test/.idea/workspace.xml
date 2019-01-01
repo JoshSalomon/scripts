@@ -3,13 +3,8 @@
   <component name="ChangeListManager">
     <list default="true" id="cd2518ba-0c23-4376-865c-2cb37a430630" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/abstract_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/abstract_api.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docker_v2_apis.py" beforeDir="false" afterPath="$PROJECT_DIR$/docker_v2_apis.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pusher.py" beforeDir="false" afterPath="$PROJECT_DIR$/pusher.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/quay_constants.py" beforeDir="false" afterPath="$PROJECT_DIR$/quay_constants.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/quay_load.py" beforeDir="false" afterPath="$PROJECT_DIR$/quay_load.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -24,17 +19,17 @@
     <fileColor scope="All" color="3c3f41" />
   </component>
   <component name="FileEditorManager">
-    <splitter split-orientation="horizontal" split-proportion="0.49050632">
+    <splitter split-orientation="horizontal" split-proportion="0.4978903">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
           <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/abstract_api.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="19">
-                  <caret line="40" selection-start-line="40" selection-end-line="41" />
+                <state relative-caret-position="338">
+                  <caret line="55" column="38" selection-start-line="55" selection-start-column="38" selection-end-line="55" selection-end-column="38" />
                   <folding>
                     <element signature="e#0#11#0" expanded="true" />
-                    <marker date="1545311447255" expanded="true" signature="336:337" ph="..." />
+                    <marker date="1545602756484" expanded="true" signature="336:337" ph="..." />
                   </folding>
                 </state>
               </provider>
@@ -43,8 +38,8 @@
           <file pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/pusher.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="169">
-                  <caret line="84" column="21" lean-forward="true" selection-start-line="84" selection-start-column="21" selection-end-line="84" selection-end-column="21" />
+                <state relative-caret-position="-71">
+                  <caret line="54" column="21" selection-start-line="54" selection-start-column="17" selection-end-line="54" selection-end-column="21" />
                   <folding>
                     <element signature="e#21#37#0" expanded="true" />
                   </folding>
@@ -64,7 +59,7 @@
           <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/venv/lib/python3.7/site-packages/requests/adapters.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="101">
+                <state relative-caret-position="7752">
                   <caret line="438" selection-start-line="438" selection-end-line="438" />
                 </state>
               </provider>
@@ -92,23 +87,14 @@
       </split-first>
       <split-second>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-          <file pinned="false" current-in-tab="true">
+          <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/docker_v2_apis.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="76">
-                  <caret line="184" column="47" lean-forward="true" selection-start-line="184" selection-start-column="47" selection-end-line="184" selection-end-column="47" />
+                <state relative-caret-position="2413">
+                  <caret line="139" selection-start-line="139" selection-end-line="139" />
                   <folding>
                     <element signature="e#0#30#0" expanded="true" />
                   </folding>
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/quay_constants.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="2356">
-                  <caret line="124" selection-start-line="124" selection-end-line="124" />
                 </state>
               </provider>
             </entry>
@@ -137,8 +123,8 @@
           <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/quay_load.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="150">
-                  <caret line="197" column="4" lean-forward="true" selection-start-line="197" selection-start-column="4" selection-end-line="197" selection-end-column="4" />
+                <state relative-caret-position="3629">
+                  <caret line="197" column="4" selection-start-line="197" selection-start-column="4" selection-end-line="197" selection-end-column="4" />
                   <folding>
                     <element signature="e#73#99#0" expanded="true" />
                   </folding>
@@ -149,8 +135,8 @@
           <file pinned="false" current-in-tab="false">
             <entry file="file:///usr/lib64/python3.7/getopt.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="318">
-                  <caret line="92" column="31" lean-forward="true" selection-start-line="92" selection-start-column="31" selection-end-line="92" selection-end-column="31" />
+                <state relative-caret-position="1748">
+                  <caret line="92" column="31" selection-start-line="92" selection-start-column="31" selection-end-line="92" selection-end-column="31" />
                 </state>
               </provider>
             </entry>
@@ -158,11 +144,29 @@
           <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/config.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="280">
-                  <caret line="231" column="37" selection-start-line="231" selection-start-column="37" selection-end-line="231" selection-end-column="37" />
+                <state relative-caret-position="509">
+                  <caret line="159" column="13" lean-forward="true" selection-start-line="159" selection-start-column="13" selection-end-line="159" selection-end-column="13" />
                   <folding>
                     <element signature="e#0#27#0" expanded="true" />
                   </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/quay_constants.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="471">
+                  <caret line="138" column="20" selection-start-line="138" selection-start-column="12" selection-end-line="138" selection-end-column="20" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file:///usr/lib64/python3.7/threading.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="16663">
+                  <caret line="884" selection-start-line="884" selection-end-line="884" />
                 </state>
               </provider>
             </entry>
@@ -181,9 +185,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>n_ima</find>
-      <find>n_</find>
-      <find>n_i</find>
       <find>AppRetryException</find>
       <find>next_tag_idx</find>
       <find>sl</find>
@@ -206,11 +207,14 @@
       <find>secon</find>
       <find>quay</find>
       <find>quay-ip</find>
-      <find>wait</find>
       <find>wa</find>
       <find>push</find>
       <find>wai</find>
       <find>opt</find>
+      <find>get</find>
+      <find>print</find>
+      <find>wait</find>
+      <find>w</find>
     </findStrings>
     <replaceStrings>
       <replace>urlsafe_b64encode</replace>
@@ -246,17 +250,17 @@
         <option value="$PROJECT_DIR$/timer_class.py" />
         <option value="$PROJECT_DIR$/pusher.py" />
         <option value="$PROJECT_DIR$/main.py" />
+        <option value="$PROJECT_DIR$/quay_load.py" />
+        <option value="$PROJECT_DIR$/docker_v2_apis.py" />
         <option value="$PROJECT_DIR$/quay_constants.py" />
         <option value="$PROJECT_DIR$/abstract_api.py" />
         <option value="$PROJECT_DIR$/config.py" />
-        <option value="$PROJECT_DIR$/quay_load.py" />
-        <option value="$PROJECT_DIR$/docker_v2_apis.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
     <option name="width" value="1920" />
-    <option name="height" value="1032" />
+    <option name="height" value="1080" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -264,6 +268,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -275,7 +280,6 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -322,7 +326,7 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/quay_load.py" />
-      <option name="PARAMETERS" value="pull --print-config --seconds 60 -t 1 -v" />
+      <option name="PARAMETERS" value="pull -t 1 -s 60 --max-tags 300  -v" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -466,7 +470,14 @@
       <option name="project" value="LOCAL" />
       <updated>1544712623463</updated>
     </task>
-    <option name="localTasksCounter" value="18" />
+    <task id="LOCAL-00018" summary="Added max tags flag for pull">
+      <created>1545466513005</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1545466513005</updated>
+    </task>
+    <option name="localTasksCounter" value="19" />
     <servers />
   </component>
   <component name="TodoView">
@@ -486,16 +497,16 @@
       <window_info id="Favorites" order="2" sideWeight="0.50164473" side_tool="true" weight="0.20464136" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.24390244" />
-      <window_info anchor="bottom" id="Run" order="2" weight="0.2782705" />
-      <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.4978903" weight="0.30931264" />
+      <window_info anchor="bottom" id="Run" order="2" visible="true" weight="0.2782705" />
+      <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.4978903" weight="0.4368071" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" weight="0.29046562" />
-      <window_info anchor="bottom" id="Event Log" order="7" sideWeight="0.5031645" side_tool="true" weight="0.45232815" />
-      <window_info anchor="bottom" id="Terminal" order="8" sideWeight="0.49683544" weight="0.43791574" />
+      <window_info anchor="bottom" id="Event Log" order="7" sideWeight="0.503692" side_tool="true" weight="0.43791574" />
+      <window_info anchor="bottom" id="Terminal" order="8" sideWeight="0.49630803" weight="0.22283813" />
       <window_info anchor="bottom" id="Python Console" order="9" sideWeight="0.4984227" weight="0.3248337" />
       <window_info anchor="bottom" id="Messages" order="10" />
-      <window_info active="true" anchor="bottom" id="Version Control" order="11" visible="true" weight="0.37583148" />
+      <window_info active="true" anchor="bottom" id="Version Control" order="11" sideWeight="0.49684542" visible="true" weight="0.37583148" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
@@ -574,7 +585,9 @@
     <MESSAGE value="middle of work - keeping this version just because python is not working on my laptop" />
     <MESSAGE value="push load works, still issues with memory leaks so can't push much more than 3000 images per test" />
     <MESSAGE value="Improvements in error management, threads are not crushing anymore just skip some tags and continue with the next one" />
-    <option name="LAST_COMMIT_MESSAGE" value="Improvements in error management, threads are not crushing anymore just skip some tags and continue with the next one" />
+    <MESSAGE value="Added max tags flag for pull" />
+    <MESSAGE value="Small changes" />
+    <option name="LAST_COMMIT_MESSAGE" value="Small changes" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -598,15 +611,22 @@
         </breakpoint>
       </default-breakpoints>
     </breakpoint-manager>
+    <watches-manager>
+      <configuration name="PythonConfigurationType">
+        <watch expression="retry" />
+      </configuration>
+    </watches-manager>
+  </component>
+  <component name="debuggerHistoryManager">
+    <expressions id="setValue">
+      <expression>
+        <expression-string>'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjkxZDE1OTg5NTIxNDQ1YjRjM2ExNjViODdjMWY1OTU3YjI3ZjMxZDY2Mzk5ODhiYjQ0NDlmODg1OTliNDgxNTcifQ.eyJhY2Nlc3MiOltdLCJjb250ZXh0Ijp7ImVudGl0eV9raW5kIjoidXNlciIsImtpbmQiOiJ1c2VyIiwidmVyc2lvbiI6MiwiY29tLmFwb3N0aWxsZS5yb290IjoiJGRpc2FibGVkIiwidXNlciI6InRlc3RfcnVubmVyIiwiZW50aXR5X3JlZmVyZW5jZSI6IjgwNzEzMzhhLWVkYjktNDc4Mi04ZmE1LWQ0ZGNlYmYxOGIyZSIsImNvbS5hcG9zdGlsbGUucm9vdHMiOnt9fSwiYXVkIjoiMTAuMTIuNzYuMTM5IiwiZXhwIjoxNTQ1NjA0Njc4LCJpc3MiOiJxdWF5IiwiaWF0IjoxNTQ1NjAxMDc4LCJuYmYiOjE1NDU2MDEwNzgsInN1YiI6InRlc3RfcnVubmVyIn0.D0MAJc2trmP73_TBXQDV0quv-W_kLOQhPhZD9rAJRbwx0GM-zSPRmNN4c399CJ1_NH62IWbz7vMyJ2-4GvuSXEUoMA7JXm5unXEeO1-XVBrQFlsdXDzJr04q1gMNOHGZgKce5D5Zge-hw50Bkc7sL6qv73F5amDlxJ3lqygxg_KgaQ5dvzelLbjfc-KcKU9W1GzxfynivH4mZ4ItqiOulZk_Ye9QP2hl1XaloO9IVPw8g_oAAoxIrLQ2jx-hkeIxyPiK9gaRHUrZkrx3i3PIUzaDhJf-dQ8r5oz7V09yxnIgVOFu_pa_0WxeShFrvebVmQAr9grOjzlDYYrwP1Rnfg'</expression-string>
+        <language-id>Python</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+    </expressions>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/venv/lib/python3.7/site-packages/jwkest/jws.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="178">
-          <caret line="140" selection-start-line="140" selection-end-line="140" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/venv/lib64/python3.7/base64.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="178">
@@ -764,13 +784,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file:///usr/lib64/python3.7/threading.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="16739">
-          <caret line="888" column="17" selection-start-line="888" selection-start-column="17" selection-end-line="888" selection-end-column="17" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/.PyCharmCE2018.3/system/python_stubs/960618764/time.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="111">
@@ -833,27 +846,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/venv/lib/python3.7/site-packages/requests/sessions.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="11571">
-          <caret line="636" selection-start-line="636" selection-end-line="636" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/lib/python3.7/site-packages/requests/models.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="5149">
-          <caret line="304" selection-start-line="304" selection-end-line="304" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1919">
-          <caret line="109" column="22" selection-start-line="109" selection-start-column="22" selection-end-line="109" selection-end-column="22" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/venv/lib/python3.7/site-packages/urllib3/connectionpool.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="6517">
@@ -882,17 +874,69 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/venv/lib/python3.7/site-packages/requests/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="485">
+          <caret line="114" column="8" selection-start-line="114" selection-start-column="8" selection-end-line="114" selection-end-column="8" />
+          <folding>
+            <element signature="e#871#885#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/venv/lib/python3.7/site-packages/requests/api.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="74">
+          <caret line="37" column="26" selection-start-line="37" selection-start-column="11" selection-end-line="37" selection-end-column="26" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/abstract_api.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="338">
+          <caret line="55" column="38" selection-start-line="55" selection-start-column="38" selection-end-line="55" selection-end-column="38" />
+          <folding>
+            <element signature="e#0#11#0" expanded="true" />
+            <marker date="1545602756484" expanded="true" signature="336:337" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/venv/lib/python3.7/site-packages/requests/sessions.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="11571">
+          <caret line="636" selection-start-line="636" selection-end-line="636" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/venv/lib/python3.7/site-packages/requests/adapters.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="101">
+        <state relative-caret-position="7752">
           <caret line="438" selection-start-line="438" selection-end-line="438" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/quay_constants.py">
+    <entry file="file://$PROJECT_DIR$/venv/lib/python3.7/site-packages/requests/models.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2356">
-          <caret line="124" selection-start-line="124" selection-end-line="124" />
+        <state relative-caret-position="5149">
+          <caret line="304" selection-start-line="304" selection-end-line="304" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1919">
+          <caret line="109" column="22" selection-start-line="109" selection-start-column="22" selection-end-line="109" selection-end-column="22" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/docker_v2_apis.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2413">
+          <caret line="139" selection-start-line="139" selection-end-line="139" />
+          <folding>
+            <element signature="e#0#30#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -913,71 +957,54 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/venv/lib/python3.7/site-packages/requests/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="414">
-          <caret line="115" column="34" selection-start-line="115" selection-start-column="34" selection-end-line="115" selection-end-column="34" />
-          <folding>
-            <element signature="e#871#885#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/abstract_api.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="19">
-          <caret line="40" selection-start-line="40" selection-end-line="41" />
-          <folding>
-            <element signature="e#0#11#0" expanded="true" />
-            <marker date="1545311447255" expanded="true" signature="336:337" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/config.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="280">
-          <caret line="231" column="37" selection-start-line="231" selection-start-column="37" selection-end-line="231" selection-end-column="37" />
-          <folding>
-            <element signature="e#0#27#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/lib64/python3.7/getopt.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="318">
-          <caret line="92" column="31" lean-forward="true" selection-start-line="92" selection-start-column="31" selection-end-line="92" selection-end-column="31" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/quay_load.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="150">
-          <caret line="197" column="4" lean-forward="true" selection-start-line="197" selection-start-column="4" selection-end-line="197" selection-end-column="4" />
+        <state relative-caret-position="3629">
+          <caret line="197" column="4" selection-start-line="197" selection-start-column="4" selection-end-line="197" selection-end-column="4" />
           <folding>
             <element signature="e#73#99#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file:///usr/lib64/python3.7/getopt.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1748">
+          <caret line="92" column="31" selection-start-line="92" selection-start-column="31" selection-end-line="92" selection-end-column="31" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/lib64/python3.7/threading.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="16663">
+          <caret line="884" selection-start-line="884" selection-end-line="884" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/pusher.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="169">
-          <caret line="84" column="21" lean-forward="true" selection-start-line="84" selection-start-column="21" selection-end-line="84" selection-end-column="21" />
+        <state relative-caret-position="-71">
+          <caret line="54" column="21" selection-start-line="54" selection-start-column="17" selection-end-line="54" selection-end-column="21" />
           <folding>
             <element signature="e#21#37#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/docker_v2_apis.py">
+    <entry file="file://$PROJECT_DIR$/config.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="76">
-          <caret line="184" column="47" lean-forward="true" selection-start-line="184" selection-start-column="47" selection-end-line="184" selection-end-column="47" />
+        <state relative-caret-position="509">
+          <caret line="159" column="13" lean-forward="true" selection-start-line="159" selection-start-column="13" selection-end-line="159" selection-end-column="13" />
           <folding>
-            <element signature="e#0#30#0" expanded="true" />
+            <element signature="e#0#27#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/quay_constants.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="471">
+          <caret line="138" column="20" selection-start-line="138" selection-start-column="12" selection-end-line="138" selection-end-column="20" />
         </state>
       </provider>
     </entry>

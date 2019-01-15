@@ -11,7 +11,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 This tool is load tester on Quay servers/clusters
 It generates load of pull and push requests in order to measure the performance that Quay cluster provides to the client.
 
-Usage: quay_load.py command OPTIONS
+Usage: quay_load.py command OPTIONS\n
     Commands:
       pull       Perform load stress on the quay cluster (mostly pull requests and some pushes'
       push       Upload random images into quay registry (fill up the registry with data)'

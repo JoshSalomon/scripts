@@ -10,7 +10,6 @@ import json
 import time
 from Cryptodome.PublicKey import RSA
 from jwkest.jwk import RSAKey
-from quay_constants import AppRetryException, TEST_USERNAME
 
 #
 # local imports
@@ -18,15 +17,11 @@ from quay_constants import AppRetryException, TEST_USERNAME
 import config
 import quay_utils
 import docker_image
-
-KB_IN_BYTES = 1024
-MB_IN_BYTES = 1024 * KB_IN_BYTES
-GB_IN_BYTES = 1024 * MB_IN_BYTES
+from quay_constants import AppRetryException, TEST_USERNAME, KB_IN_BYTES, MB_IN_BYTES
 
 DEF_MINSIZE = 100 * KB_IN_BYTES
 # DEF_MAXSIZE = 2 * GB_IN_BYTES
 DEF_MAXSIZE = 80 * MB_IN_BYTES  # For debug use smaller sizes.
-CHUNK_SIZE = 4 * MB_IN_BYTES
 
 c = config.Config()
 

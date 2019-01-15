@@ -7,6 +7,7 @@ import config
 import logging
 import ipaddress
 from main import run_pull_load, run_push_load
+from quay_constants import MB_IN_BYTES
 
 # todo - add chunk size fof push
 config = config.Config()
@@ -24,6 +25,9 @@ def usage_pull():
     print('-c, --cycles           Number of cycles over the entire registry each thread performs')
     print('                       Default %d' % config.cycles)
     print('-s, --seconds <num>    Time to run the test in seconds. The test completes when the time is reached')
+    print('                       Default: terate through the entire repository')
+    print('--wait <num>           Time to wait between pull ops in seconds')
+    print('                       Default is 0 (no wait)')
     print('--quay-ips <ip list>   List of IP addresses of the Quay server (comma separated)')
     print('                       Default is <%s>' % config.quay_ips_as_str())
     print('--quay-port <num>      The port on which Quay server listens')
@@ -50,29 +54,31 @@ def usage_push():
     print('   This operation is limited by either number of images or the total size of images ')
     print('   uploaded to the registry')
     print('Options:')
-    print('-t, --threads          Number of concurrent threads in this test')
-    print('                       Default %d' % config.threads)
-    print('--push-size-gb <num>   The total size of images to upload')
-    print('                       Default is %.01f GB' % config.push_size_gb)
-    print('--images <num>         Number of images to upload (used only if no size-gb is given)')
-    print('                       Default is %d' % config.num_upload_images)
-    print('--wait <num>           Time to wait between pull ops in seconds')
-    print('                       Default is 0 (no wait)')
-    print('--quay-ips <ip list>   List of IP addresses of the Quay server (comma separated)')
-    print('                       Default is <%s>' % config.quay_ips_as_str())
-    print('--quay-port <num>      The port on which Quay server listens')
-    print('                       Default is none')
-    print('--use_https            Use HTTPS protocol to connect to quay instead of http')
-    print('                       Default %s' % config.verbose)
-    print('-v, --verbose          Print more info to the console')
-    print('                       Default is %s' % config.verbose)
-    print('--verbose-on-error     Start printing more info after encountering errors')
-    print('                       Default is %s' % config.verbose_on_error)
-    print('--username <string>    The username for logging into Quay')
-    print('                       Default is %s' % config.username)
-    print('--password <string>    Password for the login')
-    print('--print-config         Print configuration before starting')
-    print('-h, --help             Print this message, and exit')
+    print('-t, --threads                Number of concurrent threads in this test')
+    print('                             Default %d' % config.threads)
+    print('--push-size-gb <num>         The total size of images to upload')
+    print('                             Default is %.01f GB' % config.push_size_gb)
+    print('--push-chunk-size-mb <num>   The size of each part in a multipart upload in MB')
+    print('                             Default is %s' % config.push_chunk_size / MB_IN_BYTES)
+    print('--images <num>               Number of images to upload (used only if no size-gb is given)')
+    print('                             Default is %d' % config.num_upload_images)
+    print('--wait <num>                 Time to wait between push ops in seconds')
+    print('                             Default is 0 (no wait)')
+    print('--quay-ips <ip list>         List of IP addresses of the Quay server (comma separated)')
+    print('                             Default is <%s>' % config.quay_ips_as_str())
+    print('--quay-port <num>            The port on which Quay server listens')
+    print('                             Default is none')
+    print('--use_https                  Use HTTPS protocol to connect to quay instead of http')
+    print('                             Default %s' % config.verbose)
+    print('-v, --verbose                Print more info to the console')
+    print('                             Default is %s' % config.verbose)
+    print('--verbose-on-error           Start printing more info after encountering errors')
+    print('                             Default is %s' % config.verbose_on_error)
+    print('--username <string>          The username for logging into Quay')
+    print('                             Default is %s' % config.username)
+    print('--password <string>          Password for the login')
+    print('--print-config               Print configuration before starting')
+    print('-h, --help                   Print this message, and exit')
     return
 
 
@@ -96,6 +102,7 @@ long_opts = ["threads=",
              "print-config",
              "verbose-on-error",
              "dont-run",
+             "wait=",
              "help"]
 
 
@@ -113,7 +120,7 @@ def parse_opts(cmd):
     elif cmd == Command.PUSH:
         long_opts.append("push-size-gb=")
         long_opts.append("images=")
-        long_opts.append("wait=")
+        long_opts.append("push-chunk-size-mb=")
     try:
         opts, args = getopt.getopt(sys.argv[2:], short_opts, long_opts)
         for opt, arg in opts:
@@ -152,6 +159,8 @@ def parse_opts(cmd):
                 print_config = True
             elif opt == "--dont-run":
                 config.dont_run = True
+            elif opt == "--wait":
+                config.wait_between_ops = int(arg)
             elif opt in ("-h", "--help"):
                 if cmd == Command.PULL:
                     usage_pull()
@@ -160,6 +169,8 @@ def parse_opts(cmd):
                 else:
                     assert False
                 exit(0)
+            elif opt == "--wait":
+                config.wait_between_ops = int(arg)
             #
             # PULL only options
             #
@@ -176,8 +187,8 @@ def parse_opts(cmd):
                 config.push_size_gb = int(arg)
             elif opt == "--images":
                 config.num_upload_images = int(arg)
-            elif opt == "--wait":
-                config.wait_between_ops = int(arg)
+            elif opt == "--push-chunk-size-mb":
+                config.push_chunk_size = int(arg) * MB_IN_BYTES
             else:
                 logging.error(f" Illegal option {opt} for command {sys.argv[1]}")
                 assert False

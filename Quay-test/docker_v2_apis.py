@@ -10,7 +10,6 @@ import time
 
 import config
 import docker_image
-from pusher import CHUNK_SIZE
 
 c = config.Config()
 
@@ -239,12 +238,14 @@ class DockerV2Apis(AbstractAPIs):
         return digests
 
     def patch_image_in_chunks(self, url, dckr_image: docker_image.DockerImage, headers):
+        chunk_size = c.push_chunk_size
+        assert chunk_size > 0
         i = 0
         start_byte = 0
         logging.debug(f" *** Going to push image in chunks - image size={dckr_image.size}")
-        logging.debug(f" *** Going to use {int(dckr_image.size/CHUNK_SIZE)} chunks")
+        logging.debug(f" *** Going to use {int(dckr_image.size/chunk_size)} chunks")
         while start_byte < dckr_image.size:
-            end_byte = min(start_byte + CHUNK_SIZE, dckr_image.size)
+            end_byte = min(start_byte + chunk_size, dckr_image.size)
             patch_header = {'Range': f'bytes={start_byte}-{end_byte}'}
             patch_header.update(headers)
             content_chunk = dckr_image.image_bytes[start_byte:end_byte]
@@ -258,7 +259,7 @@ class DockerV2Apis(AbstractAPIs):
                 logging.error(r.content)
                 raise const.HttpAppException(f'Failed loading image bytes, (chunk {i}) rc={r.status_code}',
                                              r.status_code, r.text)
-            start_byte = start_byte + CHUNK_SIZE
+            start_byte = start_byte + chunk_size
         return
 
     def push_single_image(self, repo_name, dckr_image: docker_image.DockerImage, header=None):
@@ -357,8 +358,8 @@ class DockerV2Apis(AbstractAPIs):
                                         dl_time_millis = start_download.diff_in_millis()
                                         tc.add_stat(dl_time_millis, size)
                                         i += 1
-                                        # if c.wait_between_ops > 0:
-                                        #     time.sleep(c.wait_between_ops)
+                                        if c.wait_between_ops > 0:
+                                            time.sleep(c.wait_between_ops)
                                     if tc.diff_in_millis() > c.millis_to_end:
                                         logging.info("Finish test after {:,} ms, threshold is {:,} ms".format
                                                      (tc.diff_in_millis(), c.millis_to_end))

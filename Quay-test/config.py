@@ -39,6 +39,7 @@ class Config(object):
         self.__verbose_on_error = False
         self.__max_tags = 0
         self.__dont_run = False
+        self.__push_chunk_size = quay_constants.PUSH_CHUNK_SIZE_MB * quay_constants.MB_IN_BYTES
 
     @property
     def threads(self):
@@ -133,6 +134,14 @@ class Config(object):
     @push_size_gb.setter
     def push_size_gb(self, size_gb):
         self.__push_size_gb = int(size_gb)
+
+    @property
+    def push_chunk_size(self):
+        return self.__push_chunk_size
+
+    @push_chunk_size.setter
+    def push_chunk_size(self, push_chunk_size):
+        self.__push_chunk_size = push_chunk_size
 
     def docker_api_url(self, ip_address):
         rc = ""
@@ -231,6 +240,8 @@ class Config(object):
                 print(f" => Push {self.push_size_gb} GBs of data into the repository")
             else:
                 print(f" => Push {self.num_upload_images} images into the repository")
+            push_size_mb = int(self.push_chunk_size / quay_constants.MB_IN_BYTES)
+            print(f" => Chunk size for multipart push is {self.push_chunk_size:,} bytes ({push_size_mb} MBs)")
             if self.wait_between_ops <= 0:
                 print(f" => No wait between push requests")
             else:
